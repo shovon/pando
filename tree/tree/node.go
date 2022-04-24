@@ -15,13 +15,6 @@ type NodeState struct {
 var _ json.Marshaler = &NodeState{}
 
 func (n *NodeState) MarshalJSON() ([]byte, error) {
-	valueMarshalerCreator := n.ValueMarshalerCreator
-	if valueMarshalerCreator == nil {
-		valueMarshalerCreator = func(value interface{}) json.Marshaler {
-			return &defaultMarshaler{value}
-		}
-	}
-
 	keyMarshalerCreator := n.KeyMarshalerCreator
 	if keyMarshalerCreator == nil {
 		keyMarshalerCreator = func(value interface{}) json.Marshaler {
@@ -29,6 +22,46 @@ func (n *NodeState) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	valueMarshalerCreator := n.ValueMarshalerCreator
+	if valueMarshalerCreator == nil {
+		valueMarshalerCreator = func(value interface{}) json.Marshaler {
+			return &defaultMarshaler{value}
+		}
+	}
+
+	type marshalableNode struct {
+		Node      json.RawMessage   `json:"node"`
+		Neighbors []json.RawMessage `json:"neighbors"`
+	}
+
+	node, err := marshalPair(n.Node, keyMarshalerCreator, valueMarshalerCreator)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	neighbors := make([]json.RawMessage, 0)
+	for _, node := range n.Neighbors {
+		result, err := marshalPair(node, keyMarshalerCreator, valueMarshalerCreator)
+		if err != nil {
+			return []byte{}, err
+		}
+		neighbors = append(neighbors, result)
+	}
+
+	return json.Marshal(marshalableNode{node, neighbors})
+}
+
+func marshalPair(
+	nodeState Pair,
+	valueMarshalerCreator,
+	keyMarshalerCreator genericMarshalerCreator,
+) (json.RawMessage, error) {
+	type pair struct {
+		Key   interface{} `json:"key"`
+		Value interface{} `json:"value"`
+	}
+
+	return json.Marshal(pair(nodeState))
 }
 
 func pairFromNode(n *node.Node) Pair {
@@ -53,7 +86,7 @@ func NewNodeState(n *node.Node) NodeState {
 		nodes = append(nodes, pairFromNode(right))
 	}
 	return NodeState{
-		pairFromNode(n),
-		nodes,
+		Node:      pairFromNode(n),
+		Neighbors: nodes,
 	}
 }
