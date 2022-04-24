@@ -10,8 +10,8 @@ type Node struct {
 	height int
 }
 
-func NewNode(key interface{}, value interface{}) Node {
-	return Node{key: key, value: value}
+func NewNode(key interface{}, value interface{}) *Node {
+	return &Node{key: key, value: value}
 }
 
 func max(x, y int) int {
@@ -36,6 +36,7 @@ func (n *Node) insertLeft(toInsert *Node) {
 	if n.left == nil {
 		n.left = toInsert
 		n.left.parent = n
+		return
 	}
 
 	n.left.Insert(toInsert)
@@ -45,6 +46,7 @@ func (n *Node) insertRight(toInsert *Node) {
 	if n.right == nil {
 		n.right = toInsert
 		n.right.parent = n
+		return
 	}
 
 	n.right.Insert(toInsert)
@@ -71,14 +73,16 @@ func (n *Node) Height() int {
 	return n.height
 }
 
-// Deletes any node that has a key specified by the key parameter, except for
-//   the node itself
+// Delete deletes any node that has a key specified by the key parameter, except
+// for the node itself.
+//
+// Note: this is a BFS algorithm
 func (n *Node) Delete(key interface{}) bool {
 	if n.left != nil && n.left.key == key {
-		n.left.deleteLeft()
+		n.deleteLeft()
 		return true
 	} else if n.right != nil && n.right.key == key {
-		n.right.deleteRight()
+		n.deleteRight()
 		return true
 	}
 
@@ -87,31 +91,32 @@ func (n *Node) Delete(key interface{}) bool {
 }
 
 func (n *Node) deleteLeft() {
-	if n.left != nil {
-		left := n.left.left
-		right := n.left.right
-
-		n.left = nil
-
-		n.scatterAndInsert(left)
-		n.scatterAndInsert(right)
+	left := n.left
+	n.left = nil
+	if left != nil {
+		n.delete(left)
 	}
 }
 
 func (n *Node) deleteRight() {
-	if n.right != nil {
-		left := n.right.left
-		right := n.right.right
-
-		n.right = nil
-
-		n.scatterAndInsert(left)
-		n.scatterAndInsert(right)
+	right := n.right
+	n.right = nil
+	if right != nil {
+		n.delete(right)
 	}
+}
+
+func (n *Node) delete(node *Node) {
+	left := node.left
+	right := node.right
+
+	n.scatterAndInsert(left)
+	n.scatterAndInsert(right)
 }
 
 func (n *Node) scatterAndInsert(node *Node) {
 	if node != nil {
+		node.parent = nil
 		nodes := node.scatter()
 		for child := range nodes {
 			n.Insert(child)
@@ -127,25 +132,24 @@ func (n *Node) scatter() <-chan *Node {
 	right := n.right
 	n.right = nil
 
-	if left != nil {
-		left.parent = nil
-		cl := left.scatter()
-		go func() {
-			for node := range cl {
-				c <- node
-			}
-
-			if right != nil {
-				right.parent = nil
-				cr := right.scatter()
-				go func() {
-					for node := range cr {
-						c <- node
-					}
-				}()
-			}
-		}()
+	iterate := func(node *Node) {
+		node.parent = nil
+		cr := node.scatter()
+		for node := range cr {
+			c <- node
+		}
+		c <- node
 	}
+
+	go func() {
+		if left != nil {
+			iterate(left)
+		}
+		if right != nil {
+			iterate(right)
+		}
+		close(c)
+	}()
 
 	return c
 }
@@ -155,6 +159,7 @@ func (n *Node) Find(key interface{}) *Node {
 	if n.key == key {
 		return n
 	}
+
 	if n.left != nil {
 		node := n.left.Find(key)
 		if node != nil {
@@ -167,4 +172,56 @@ func (n *Node) Find(key interface{}) *Node {
 	}
 
 	return nil
+}
+
+// Key gets the key that the node holds
+func (n Node) Key() interface{} {
+	return n.key
+}
+
+// Value gets the value that the node holds
+func (n Node) Value() interface{} {
+	return n.value
+}
+
+func (n Node) Parent() *Node {
+	return n.parent
+}
+
+// Left gets the left subtree that the node points to
+func (n Node) Left() *Node {
+	return n.left
+}
+
+// Right gets the right subtree that the node points to
+func (n Node) Right() *Node {
+	return n.right
+}
+
+// Iterates through all nodes in all subtrees
+func (n Node) Iterate() <-chan *Node {
+	c := make(chan *Node)
+
+	go func() {
+		iterate := func(node *Node) {
+			for node := range node.Iterate() {
+				c <- node
+			}
+			c <- node
+		}
+
+		if n.left != nil {
+			iterate(n.left)
+		}
+
+		if n.right != nil {
+			iterate(n.right)
+		}
+
+		c <- &n
+
+		close(c)
+	}()
+
+	return c
 }
