@@ -4,10 +4,10 @@ import "sync"
 
 type KeyedListeners struct {
 	mut       sync.RWMutex
-	listeners map[string]*Listeners
+	listeners map[interface{}]*Listeners
 }
 
-func (k *KeyedListeners) RegisterListener(key string) <-chan interface{} {
+func (k *KeyedListeners) RegisterListener(key interface{}) <-chan interface{} {
 	k.mut.Lock()
 	defer k.mut.Unlock()
 
@@ -19,7 +19,7 @@ func (k *KeyedListeners) RegisterListener(key string) <-chan interface{} {
 	return listeners.RegisterListener()
 }
 
-func (k *KeyedListeners) UnregisterListener(key string, c <-chan interface{}) {
+func (k *KeyedListeners) UnregisterListener(key interface{}, c <-chan interface{}) {
 	k.mut.Lock()
 	defer k.mut.Unlock()
 
@@ -31,8 +31,27 @@ func (k *KeyedListeners) UnregisterListener(key string, c <-chan interface{}) {
 	listeners.UnregisterListener(c)
 }
 
+func (k *KeyedListeners) EmitEvent(key, d interface{}) {
+	k.mut.RLock()
+	defer k.mut.RUnlock()
+
+	listeners, ok := k.listeners[key]
+	if ok {
+		listeners.EmitEvent(d)
+	}
+}
+
+func (k *KeyedListeners) EmitEventToAll(d interface{}) {
+	k.mut.RLock()
+	defer k.mut.RUnlock()
+
+	for _, value := range k.listeners {
+		value.EmitEvent(d)
+	}
+}
+
 type Pair struct {
-	key       string
+	key       interface{}
 	listeners *Listeners
 }
 
@@ -40,6 +59,9 @@ func (k *KeyedListeners) Iterate() <-chan Pair {
 	c := make(chan Pair)
 
 	go func() {
+		k.mut.RLock()
+		defer k.mut.RUnlock()
+
 		for key, value := range k.listeners {
 			c <- Pair{key, value}
 		}
@@ -49,7 +71,10 @@ func (k *KeyedListeners) Iterate() <-chan Pair {
 	return c
 }
 
-func (k *KeyedListeners) Get(key string) (*Listeners, bool) {
+func (k *KeyedListeners) Get(key interface{}) (*Listeners, bool) {
+	k.mut.RLock()
+	defer k.mut.RUnlock()
+
 	l, ok := k.listeners[key]
 	return l, ok
 }
