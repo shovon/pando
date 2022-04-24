@@ -1,3 +1,3 @@
-package tree
+package spanningtree
 
 type Deleted struct{}

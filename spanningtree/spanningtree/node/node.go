@@ -94,7 +94,7 @@ func (n *Node) deleteLeft() {
 	left := n.left
 	n.left = nil
 	if left != nil {
-		n.delete(left)
+		n.deleteNode(left)
 	}
 }
 
@@ -102,11 +102,11 @@ func (n *Node) deleteRight() {
 	right := n.right
 	n.right = nil
 	if right != nil {
-		n.delete(right)
+		n.deleteNode(right)
 	}
 }
 
-func (n *Node) delete(node *Node) {
+func (n *Node) deleteNode(node *Node) {
 	left := node.left
 	right := node.right
 

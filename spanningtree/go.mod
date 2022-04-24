@@ -1,4 +1,4 @@
-module tree
+module spanningtree
 
 go 1.17
 

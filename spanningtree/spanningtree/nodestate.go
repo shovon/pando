@@ -1,8 +1,8 @@
-package tree
+package spanningtree
 
 import (
 	"encoding/json"
-	"tree/tree/node"
+	"spanningtree/spanningtree/node"
 )
 
 type NodeState struct {

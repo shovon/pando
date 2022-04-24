@@ -1,4 +1,4 @@
-package tree
+package spanningtree
 
 import (
 	"sync"
@@ -117,4 +117,22 @@ func TestDelete(t *testing.T) {
 
 	insertWg.Wait()
 	insertWg.Wait()
+}
+
+func TreeEmpty(t *testing.T) {
+	tree := &Tree{}
+
+	tree.Insert(Pair{"cool", 1})
+	tree.Insert(Pair{"nice", 1})
+	tree.Insert(Pair{"amazing", 1})
+	tree.Insert(Pair{"sweet", 1})
+
+	tree.Delete("cool")
+	tree.Delete("nice")
+	tree.Delete("amazing")
+	tree.Delete("sweet")
+
+	if !tree.IsEmpty() {
+		t.Errorf("Expected the tree to be determined to be empty, but it was not!")
+	}
 }

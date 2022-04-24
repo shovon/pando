@@ -1,4 +1,4 @@
-package tree
+package spanningtree
 
 type Pair struct {
 	Key   interface{}

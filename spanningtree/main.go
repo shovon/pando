@@ -3,7 +3,7 @@ package main
 import (
 	"errors"
 	"net/http"
-	"tree/tree"
+	"spanningtree/spanningtree"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -11,11 +11,26 @@ import (
 )
 
 var upgrader = websocket.Upgrader{}
-var trees = make(map[string]*tree.Tree)
+
+var trees = make(map[string]*spanningtree.Tree)
+
+func getTree(id string) *spanningtree.Tree {
+	t, ok := trees[id]
+	if !ok {
+		t = &spanningtree.Tree{}
+		trees[id] = t
+	}
+
+	return t
+}
+
+func deleteValue(key string) {
+
+}
 
 func main() {
 	r := mux.NewRouter()
-	r.HandleFunc("/tree/{id}", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/tree/{id}/{userid}", func(w http.ResponseWriter, r *http.Request) {
 		c, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			log.Err(err)
@@ -32,8 +47,14 @@ func main() {
 			w.Write([]byte("Internal server error. Failed to parse ID"))
 		}
 
-		tree := &tree.Tree{}
-		trees[id] = tree
-		defer delete(trees, id)
+		t := getTree(id)
+		listener := t.RegisterChangeListener()
+
+		go func() {
+			switch (<-listener).(type) {
+			case spanningtree.Deleted:
+
+			}
+		}()
 	})
 }

@@ -1,4 +1,4 @@
-package tree
+package spanningtree
 
 import "encoding/json"
 

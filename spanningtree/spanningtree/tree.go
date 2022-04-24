@@ -1,10 +1,10 @@
-package tree
+package spanningtree
 
 import (
 	"encoding/json"
+	"spanningtree/listeners"
+	"spanningtree/spanningtree/node"
 	"sync"
-	"tree/tree/listeners"
-	"tree/tree/node"
 )
 
 type Tree struct {
@@ -156,6 +156,9 @@ func (t *Tree) Iterate() <-chan Pair {
 	}
 
 	go func() {
+		t.mut.RLock()
+		defer t.mut.RUnlock()
+
 		for node := range t.root.Iterate() {
 			pair := Pair{node.Key(), node.Value()}
 			c <- pair
@@ -165,4 +168,10 @@ func (t *Tree) Iterate() <-chan Pair {
 	}()
 
 	return c
+}
+
+func (t *Tree) IsEmpty() bool {
+	t.mut.RLock()
+	defer t.mut.RUnlock()
+	return t.root == nil
 }
