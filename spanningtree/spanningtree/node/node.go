@@ -225,3 +225,15 @@ func (n Node) Iterate() <-chan *Node {
 
 	return c
 }
+
+func (n Node) Cardinality() int {
+	return 1 + nodeCardinality(n.left) + nodeCardinality(n.right)
+}
+
+func nodeCardinality(node *Node) int {
+	if node == nil {
+		return 0
+	}
+
+	return node.Cardinality()
+}

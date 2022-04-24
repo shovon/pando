@@ -1,28 +1,11 @@
 package spanningtree
 
 import (
-	"sync"
 	"testing"
 )
 
 func TestInsert(t *testing.T) {
 	tree := &Tree{}
-
-	listener := tree.RegisterChangeListener()
-
-	var wg sync.WaitGroup
-	wg.Add(6)
-
-	go func() {
-		for {
-			switch (<-listener).(type) {
-			case NodeState:
-				wg.Done()
-			default:
-				t.Error("Expected a NodeState, but got something else")
-			}
-		}
-	}()
 
 	m := map[string]int{
 		"hello":   1,
@@ -56,7 +39,10 @@ func TestInsert(t *testing.T) {
 		}
 	}
 
-	wg.Wait()
+	cardinality := tree.Cardinality()
+	if tree.Cardinality() != 6 {
+		t.Errorf("Expected 6, but got %d", cardinality)
+	}
 }
 
 func TestDelete(t *testing.T) {
@@ -68,26 +54,6 @@ func TestDelete(t *testing.T) {
 		"foo":     3,
 		"widgets": 6,
 	}
-
-	var insertWg, deleteWg sync.WaitGroup
-
-	listener := tree.RegisterChangeListener()
-
-	go func() {
-		for {
-			switch (<-listener).(type) {
-			case NodeState:
-				insertWg.Done()
-			case Deleted:
-				deleteWg.Done()
-			default:
-				t.Error("Expected either a NodeState or Deleted, but got something else")
-			}
-		}
-	}()
-
-	insertWg.Add(6)
-	deleteWg.Add(2)
 
 	tree.Insert(Pair{"hello", 1})
 	tree.Insert(Pair{"world", 2})
@@ -115,11 +81,13 @@ func TestDelete(t *testing.T) {
 		}
 	}
 
-	insertWg.Wait()
-	insertWg.Wait()
+	cardinality := tree.Cardinality()
+	if tree.Cardinality() != 4 {
+		t.Errorf("Expected 4, but got %d", cardinality)
+	}
 }
 
-func TreeEmpty(t *testing.T) {
+func TestTreeEmpty(t *testing.T) {
 	tree := &Tree{}
 
 	tree.Insert(Pair{"cool", 1})
@@ -134,5 +102,31 @@ func TreeEmpty(t *testing.T) {
 
 	if !tree.IsEmpty() {
 		t.Errorf("Expected the tree to be determined to be empty, but it was not!")
+	}
+
+	cardinality := tree.Cardinality()
+	if tree.Cardinality() != 0 {
+		t.Errorf("Expected 0, but got %d", cardinality)
+	}
+}
+
+func TestInsertDelete(t *testing.T) {
+	tree := &Tree{}
+
+	tree.Insert(Pair{"cool", 1})
+	tree.Delete("cool")
+	tree.Insert(Pair{"nice", 1})
+	tree.Insert(Pair{"amazing", 1})
+	tree.Delete("nice")
+	tree.Insert(Pair{"sweet", 1})
+
+	tree.Delete("amazing")
+	tree.Delete("sweet")
+
+	tree.Insert(Pair{"foo", 2})
+
+	cardinality := tree.Cardinality()
+	if tree.Cardinality() != 1 {
+		t.Errorf("Expected 1, but got %d", cardinality)
 	}
 }

@@ -11,7 +11,7 @@ type Tree struct {
 	mut  sync.RWMutex
 	root *node.Node
 
-	listeners             listeners.Listeners
+	listeners             listeners.KeyedListeners
 	ValueMarshalerCreator genericMarshalerCreator
 	KeyMarshalerCreator   genericMarshalerCreator
 }
@@ -98,8 +98,8 @@ func marshalNode(
 	})
 }
 
-func (t *Tree) RegisterChangeListener() <-chan interface{} {
-	return t.listeners.RegisterListener()
+func (t *Tree) RegisterChangeListener(key interface{}) <-chan interface{} {
+	return t.listeners.RegisterListener(key)
 }
 
 func (t *Tree) Insert(pair Pair) {
@@ -107,7 +107,7 @@ func (t *Tree) Insert(pair Pair) {
 	defer t.mut.Unlock()
 
 	node := node.NewNode(pair.Key, pair.Value)
-	defer t.listeners.EmitEvent(NewNodeState(node))
+	defer t.listeners.EmitEvent(node.Key(), NewNodeState(node))
 
 	if t.root == nil {
 		t.root = node
@@ -115,7 +115,6 @@ func (t *Tree) Insert(pair Pair) {
 	}
 
 	t.root.Insert(node)
-
 }
 
 func (t *Tree) Delete(key interface{}) bool {
@@ -129,19 +128,50 @@ func (t *Tree) Delete(key interface{}) bool {
 	if t.root.Key() == key {
 		left := t.root.Left()
 		right := t.root.Right()
-		nodes := node.NewScatterer(right).Scatter()
-		for node := range nodes {
-			left.Insert(node)
+		if left == nil {
+			t.root = right
+		} else {
+			nodes := node.NewScatterer(right).Scatter()
+			for node := range nodes {
+				left.Insert(node)
+			}
+			t.listeners.EmitEventToAll(Deleted{})
+			t.root = left
 		}
-		t.listeners.EmitEvent(Deleted{})
 		return true
 	}
 
 	deleted := t.root.Delete(key)
 	if deleted {
-		t.listeners.EmitEvent(Deleted{})
+		t.listeners.EmitEventToAll(Deleted{})
 	}
 	return deleted
+}
+
+func (t *Tree) emitEvent() {
+	for node := range t.iterate() {
+		t.listeners.EmitEvent(node.Key(), NewNodeState(node))
+	}
+}
+
+func (t *Tree) iterate() <-chan *node.Node {
+	c := make(chan *node.Node)
+
+	go func() {
+		t.mut.RLock()
+		defer t.mut.RUnlock()
+		defer close(c)
+
+		if t.root == nil {
+			return
+		}
+
+		for node := range t.root.Iterate() {
+			c <- node
+		}
+	}()
+
+	return c
 }
 
 func (t *Tree) Iterate() <-chan Pair {
@@ -168,6 +198,14 @@ func (t *Tree) Iterate() <-chan Pair {
 	}()
 
 	return c
+}
+
+func (t *Tree) Cardinality() int {
+	if t.root == nil {
+		return 0
+	}
+
+	return t.root.Cardinality()
 }
 
 func (t *Tree) IsEmpty() bool {
