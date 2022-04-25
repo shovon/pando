@@ -9,6 +9,9 @@ import (
 	"sync"
 )
 
+// Tree represents a spanning tree data structure.
+
+// All public operations on this tree (including reads) are thread-safe
 type Tree struct {
 	mut  sync.RWMutex
 	root *node.Node
@@ -20,6 +23,7 @@ type Tree struct {
 
 var _ json.Marshaler = &Tree{}
 
+// MarshalJSON marshals the tree to a JSON representation
 func (t *Tree) MarshalJSON() ([]byte, error) {
 	t.mut.RLock()
 	defer t.mut.RUnlock()
@@ -100,10 +104,12 @@ func marshalNode(
 	})
 }
 
+// RegisterChangeListener creates a channel that serves as the event listener
 func (t *Tree) RegisterChangeListener(key interface{}) <-chan interface{} {
 	return t.listeners.RegisterListener(key)
 }
 
+// Insert inserts a key/value par into the tree
 func (t *Tree) Insert(pair Pair) {
 	t.mut.Lock()
 	defer t.mut.Unlock()
@@ -111,7 +117,7 @@ func (t *Tree) Insert(pair Pair) {
 	fmt.Fprintf(os.Stderr, "Insert\n")
 
 	node := node.NewNode(pair.Key, pair.Value)
-	defer t.listeners.EmitEvent(node.Key(), NewNodeState(node))
+	defer t.emitChangeEvent()
 
 	if t.root == nil {
 		t.root = node
@@ -121,6 +127,7 @@ func (t *Tree) Insert(pair Pair) {
 	t.root.Insert(node)
 }
 
+// Delete delets a node from the tree, given a key
 func (t *Tree) Delete(key interface{}) bool {
 	t.mut.Lock()
 	defer t.mut.Unlock()
@@ -202,7 +209,10 @@ func (t *Tree) iterate() <-chan *node.Node {
 	return c
 }
 
+// Iterate iterates all key-value pairs in the tree
 func (t *Tree) Iterate() <-chan Pair {
+	// Note: this is likely useless
+
 	t.mut.RLock()
 	defer t.mut.RUnlock()
 
@@ -229,6 +239,9 @@ func (t *Tree) Iterate() <-chan Pair {
 }
 
 func (t *Tree) Cardinality() int {
+	t.mut.RLock()
+	defer t.mut.RUnlock()
+
 	if t.root == nil {
 		return 0
 	}
@@ -239,5 +252,6 @@ func (t *Tree) Cardinality() int {
 func (t *Tree) IsEmpty() bool {
 	t.mut.RLock()
 	defer t.mut.RUnlock()
+
 	return t.root == nil
 }
