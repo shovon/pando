@@ -2,8 +2,6 @@ package spanningtree
 
 import (
 	"encoding/json"
-	"fmt"
-	"os"
 	"spanningtree/listeners"
 	"spanningtree/spanningtree/node"
 	"sync"
@@ -114,8 +112,6 @@ func (t *Tree) Insert(pair Pair) {
 	t.mut.Lock()
 	defer t.mut.Unlock()
 
-	fmt.Fprintf(os.Stderr, "Insert\n")
-
 	node := node.NewNode(pair.Key, pair.Value)
 	defer t.emitChangeEvent()
 
@@ -131,8 +127,6 @@ func (t *Tree) Insert(pair Pair) {
 func (t *Tree) Delete(key interface{}) bool {
 	t.mut.Lock()
 	defer t.mut.Unlock()
-
-	fmt.Fprintf(os.Stderr, "Delete\n")
 
 	if t.root == nil {
 		return false
@@ -162,9 +156,7 @@ func (t *Tree) Delete(key interface{}) bool {
 }
 
 func (t *Tree) emitChangeEvent() {
-	fmt.Fprintf(os.Stderr, "Cool\n")
 	for node := range t.iterateUnsafe() {
-		fmt.Fprintf(os.Stderr, "Cool\n")
 		t.listeners.EmitEvent(node.Key(), NewNodeState(node))
 	}
 }
@@ -190,8 +182,6 @@ func (t *Tree) iterateUnsafe() <-chan *node.Node {
 func (t *Tree) iterate() <-chan *node.Node {
 	c := make(chan *node.Node)
 
-	fmt.Fprint(os.Stderr, "Something\n")
-
 	go func() {
 		t.mut.RLock()
 		defer t.mut.RUnlock()
@@ -211,8 +201,6 @@ func (t *Tree) iterate() <-chan *node.Node {
 
 // Iterate iterates all key-value pairs in the tree
 func (t *Tree) Iterate() <-chan Pair {
-	// Note: this is likely useless
-
 	t.mut.RLock()
 	defer t.mut.RUnlock()
 

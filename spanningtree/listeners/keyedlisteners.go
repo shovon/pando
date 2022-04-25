@@ -11,6 +11,8 @@ func (k *KeyedListeners) RegisterListener(key interface{}) <-chan interface{} {
 	k.mut.Lock()
 	defer k.mut.Unlock()
 
+	k.initializeListeners()
+
 	listeners, ok := k.listeners[key]
 	if !ok {
 		listeners = &Listeners{}
@@ -19,9 +21,17 @@ func (k *KeyedListeners) RegisterListener(key interface{}) <-chan interface{} {
 	return listeners.RegisterListener()
 }
 
+func (k *KeyedListeners) initializeListeners() {
+	if k.listeners == nil {
+		k.listeners = make(map[interface{}]*Listeners)
+	}
+}
+
 func (k *KeyedListeners) UnregisterListener(key interface{}, c <-chan interface{}) {
 	k.mut.Lock()
 	defer k.mut.Unlock()
+
+	k.initializeListeners()
 
 	listeners, ok := k.listeners[key]
 	if !ok {

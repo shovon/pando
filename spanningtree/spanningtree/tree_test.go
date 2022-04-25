@@ -1,6 +1,7 @@
 package spanningtree
 
 import (
+	"sync"
 	"testing"
 )
 
@@ -129,4 +130,22 @@ func TestInsertDelete(t *testing.T) {
 	if tree.Cardinality() != 1 {
 		t.Errorf("Expected 1, but got %d", cardinality)
 	}
+}
+
+func TestEvent(t *testing.T) {
+	tree := &Tree{}
+
+	listener := tree.RegisterChangeListener("hello")
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	go func() {
+		<-listener
+		wg.Done()
+	}()
+
+	tree.Insert(Pair{"hello", 1})
+
+	wg.Wait()
 }
