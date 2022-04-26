@@ -1,9 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
-	"spanningtree/spanningtree"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -12,25 +12,38 @@ import (
 
 var upgrader = websocket.Upgrader{}
 
-var trees = make(map[string]*spanningtree.Tree)
+var trees = newTreeManager()
 
-func getTree(id string) *spanningtree.Tree {
-	t, ok := trees[id]
-	if !ok {
-		t = &spanningtree.Tree{}
-		trees[id] = t
-	}
-
-	return t
+type participant struct {
+	conn *websocket.Conn
+	meta json.RawMessage
 }
 
-func deleteValue(key string) {
+var _ json.Marshaler = &participant{}
 
+func (p *participant) MarshalJSON() ([]byte, error) {
+	return p.meta, nil
 }
 
 func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/tree/{id}/{userid}", func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+
+		userId, ok := vars["userid"]
+		if !ok {
+			log.Err(errors.New("The user ID was not set, for some reason. This is bad"))
+			w.WriteHeader(500)
+			w.Write([]byte("Internal server error. Failed to parse User ID"))
+		}
+
+		id, ok := vars["id"]
+		if !ok {
+			log.Err(errors.New("The ID was not set, for some reason. This is bad"))
+			w.WriteHeader(500)
+			w.Write([]byte("Internal server error. Failed to parse ID"))
+		}
+
 		c, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			log.Err(err)
@@ -39,20 +52,11 @@ func main() {
 			return
 		}
 
-		vars := mux.Vars(r)
-		id, ok := vars["id"]
-		if !ok {
-			log.Err(errors.New("Internal server error"))
-			w.WriteHeader(500)
-			w.Write([]byte("Internal server error. Failed to parse ID"))
-		}
-
-		t := getTree(id)
-		listener := t.RegisterChangeListener()
+		t := trees.getTree(id)
+		listener := t.RegisterChangeListener(userId)
 
 		go func() {
 			switch (<-listener).(type) {
-			case spanningtree.Deleted:
 
 			}
 		}()

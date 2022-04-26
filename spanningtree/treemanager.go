@@ -6,8 +6,9 @@ import (
 )
 
 type treeManager struct {
-	mut   sync.RWMutex
-	trees map[string]*spanningtree.Tree
+	treeMut    sync.RWMutex
+	managerMut sync.RWMutex
+	trees      map[string]*spanningtree.Tree
 }
 
 func newTreeManager() treeManager {
@@ -15,20 +16,31 @@ func newTreeManager() treeManager {
 }
 
 func (t *treeManager) getTree(id string) *spanningtree.Tree {
+	t.managerMut.Lock()
+	defer t.managerMut.Unlock()
 
 	tree, ok := t.trees[id]
 	if !ok {
 		tree = &spanningtree.Tree{}
-		trees[id] = tree
+		t.trees[id] = tree
 	}
 
 	return tree
 }
 
-func (t *treeManager) insertNode(treeId string, nodeId string) {
-
+func (t *treeManager) insertNode(treeId string, nodeId string, p participant) {
+	t.treeMut.Lock()
+	defer t.treeMut.Unlock()
+	tree := t.getTree(treeId)
+	tree.Insert(nodeId, p)
 }
 
 func (t *treeManager) deleteNode(treeId string, nodeId string) {
-
+	t.treeMut.Lock()
+	defer t.treeMut.Unlock()
+	tree := t.getTree(treeId)
+	tree.Delete(nodeId)
+	if tree.IsEmpty() {
+		delete(t.trees, treeId)
+	}
 }

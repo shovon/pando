@@ -135,7 +135,13 @@ func (t *Tree) UpdateValue(key interface{}, value interface{}) bool {
 		return false
 	}
 
-	return t.root.UpdateValue(key, value)
+	updated := t.root.UpdateValue(key, value)
+
+	if updated {
+		t.emitChangeEvent()
+	}
+
+	return updated
 }
 
 func (t *Tree) Upsert(key interface{}, value interface{}) {
@@ -144,14 +150,20 @@ func (t *Tree) Upsert(key interface{}, value interface{}) {
 
 	if t.root == nil {
 		t.unsafeInsert(key, value)
+		t.emitChangeEvent()
 		return
 	}
 
 	node := t.root.Find(key)
 	if node == nil {
 		t.unsafeInsert(key, value)
+		t.emitChangeEvent()
 	} else {
-		t.root.UpdateValue(key, value)
+		updated := t.root.UpdateValue(key, value)
+		if !updated {
+			panic("Not should have been updated, but it was not!")
+		}
+		t.emitChangeEvent()
 	}
 }
 
@@ -213,10 +225,12 @@ func (t *Tree) emitChangeEvent() {
 	}
 }
 
-func (t *Tree) iterateUnsafe() <-chan *node.Node {
+func (t *Tree) iterateSafe() <-chan *node.Node {
 	c := make(chan *node.Node)
 
 	go func() {
+		t.mut.RLock()
+		defer t.mut.RUnlock()
 		defer close(c)
 
 		if t.root == nil {
@@ -231,12 +245,10 @@ func (t *Tree) iterateUnsafe() <-chan *node.Node {
 	return c
 }
 
-func (t *Tree) iterate() <-chan *node.Node {
+func (t *Tree) iterateUnsafe() <-chan *node.Node {
 	c := make(chan *node.Node)
 
 	go func() {
-		t.mut.RLock()
-		defer t.mut.RUnlock()
 		defer close(c)
 
 		if t.root == nil {
