@@ -108,11 +108,15 @@ func (t *Tree) RegisterChangeListener(key interface{}) <-chan interface{} {
 }
 
 // Insert inserts a key/value par into the tree
-func (t *Tree) Insert(pair Pair) {
+func (t *Tree) Insert(key interface{}, value interface{}) {
 	t.mut.Lock()
 	defer t.mut.Unlock()
 
-	node := node.NewNode(pair.Key, pair.Value)
+	t.unsafeInsert(key, value)
+}
+
+func (t *Tree) unsafeInsert(key interface{}, value interface{}) {
+	node := node.NewNode(key, value)
 	defer t.emitChangeEvent()
 
 	if t.root == nil {
@@ -121,6 +125,54 @@ func (t *Tree) Insert(pair Pair) {
 	}
 
 	t.root.Insert(node)
+}
+
+func (t *Tree) UpdateValue(key interface{}, value interface{}) bool {
+	t.mut.Lock()
+	defer t.mut.Unlock()
+
+	if t.root == nil {
+		return false
+	}
+
+	return t.root.UpdateValue(key, value)
+}
+
+func (t *Tree) Upsert(key interface{}, value interface{}) {
+	t.mut.Lock()
+	defer t.mut.Unlock()
+
+	if t.root == nil {
+		t.unsafeInsert(key, value)
+		return
+	}
+
+	node := t.root.Find(key)
+	if node == nil {
+		t.unsafeInsert(key, value)
+	} else {
+		t.root.UpdateValue(key, value)
+	}
+}
+
+func (t *Tree) Find(key interface{}) (NodeState, bool) {
+	t.mut.RLock()
+	defer t.mut.RUnlock()
+
+	node := t.unsafeFind(key)
+	if node == nil {
+		return NodeState{}, false
+	}
+
+	return NewNodeState(node), true
+}
+
+func (t *Tree) unsafeFind(key interface{}) *node.Node {
+	if t.root == nil {
+		return nil
+	}
+
+	return t.root.Find(key)
 }
 
 // Delete delets a node from the tree, given a key

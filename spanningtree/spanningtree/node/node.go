@@ -174,6 +174,28 @@ func (n *Node) Find(key interface{}) *Node {
 	return nil
 }
 
+// UpdateValue updates the value of the node identified by the provided key
+func (n *Node) UpdateValue(key interface{}, value interface{}) bool {
+	if n.key == key {
+		n.value = value
+		return true
+	}
+
+	updated := false
+	if n.left != nil {
+		updated = n.left.UpdateValue(key, value)
+	}
+	if updated {
+		return true
+	}
+
+	if n.right == nil {
+		return false
+	}
+
+	return n.right.UpdateValue(key, value)
+}
+
 // Key gets the key that the node holds
 func (n Node) Key() interface{} {
 	return n.key
@@ -204,10 +226,10 @@ func (n Node) Iterate() <-chan *Node {
 
 	go func() {
 		iterate := func(node *Node) {
-			for node := range node.Iterate() {
-				c <- node
+			for child := range node.Iterate() {
+				c <- child
 			}
-			c <- node
+			// c <- node
 		}
 
 		if n.left != nil {
