@@ -28,14 +28,30 @@ func (t *treeManager) getTree(id string) *spanningtree.Tree {
 	return tree
 }
 
-func (t *treeManager) insertNode(treeId string, nodeId string, p participant) {
+func (t *treeManager) upsert(treeId, nodeId string, p participant) {
+	t.managerMut.Lock()
+	defer t.managerMut.Unlock()
+
+	tree := t.getTree(treeId)
+	tree.Upsert(nodeId, p)
+}
+
+func (t *treeManager) update(treeId, nodeId string, p participant) {
+	t.managerMut.Lock()
+	defer t.managerMut.Unlock()
+
+	tree := t.getTree(treeId)
+	tree.UpdateValue(nodeId, p)
+}
+
+func (t *treeManager) insertNode(treeId, nodeId string, p participant) {
 	t.treeMut.Lock()
 	defer t.treeMut.Unlock()
 	tree := t.getTree(treeId)
 	tree.Insert(nodeId, p)
 }
 
-func (t *treeManager) deleteNode(treeId string, nodeId string) {
+func (t *treeManager) deleteNode(treeId, nodeId string) {
 	t.treeMut.Lock()
 	defer t.treeMut.Unlock()
 	tree := t.getTree(treeId)

@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"net/http"
+	"spanningtree/spanningtree"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -23,6 +25,15 @@ var _ json.Marshaler = &participant{}
 
 func (p *participant) MarshalJSON() ([]byte, error) {
 	return p.meta, nil
+}
+
+func parseKey(id string) error {
+	bytes := make([]byte)
+	parsed, err := base64.StdEncoding.Decode(bytes, []byte(id))
+
+
+
+	return err
 }
 
 func main() {
@@ -52,12 +63,15 @@ func main() {
 			return
 		}
 
+		c.WriteJSON(v interface{})
+
 		t := trees.getTree(id)
 		listener := t.RegisterChangeListener(userId)
 
 		go func() {
-			switch (<-listener).(type) {
-
+			switch ev := (<-listener).(type) {
+			case spanningtree.NodeState:
+				
 			}
 		}()
 	})

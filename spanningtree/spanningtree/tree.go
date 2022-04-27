@@ -108,14 +108,14 @@ func (t *Tree) RegisterChangeListener(key interface{}) <-chan interface{} {
 }
 
 // Insert inserts a key/value par into the tree
-func (t *Tree) Insert(key interface{}, value interface{}) {
+func (t *Tree) Insert(key, value interface{}) {
 	t.mut.Lock()
 	defer t.mut.Unlock()
 
 	t.unsafeInsert(key, value)
 }
 
-func (t *Tree) unsafeInsert(key interface{}, value interface{}) {
+func (t *Tree) unsafeInsert(key, value interface{}) {
 	node := node.NewNode(key, value)
 	defer t.emitChangeEvent()
 
@@ -127,7 +127,7 @@ func (t *Tree) unsafeInsert(key interface{}, value interface{}) {
 	t.root.Insert(node)
 }
 
-func (t *Tree) UpdateValue(key interface{}, value interface{}) bool {
+func (t *Tree) UpdateValue(key, value interface{}) bool {
 	t.mut.Lock()
 	defer t.mut.Unlock()
 
@@ -144,7 +144,7 @@ func (t *Tree) UpdateValue(key interface{}, value interface{}) bool {
 	return updated
 }
 
-func (t *Tree) Upsert(key interface{}, value interface{}) {
+func (t *Tree) Upsert(key, value interface{}) {
 	t.mut.Lock()
 	defer t.mut.Unlock()
 
