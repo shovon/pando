@@ -4,8 +4,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"math/rand"
 	"net/http"
-	"spanningtree/spanningtree"
+	"spanningtree/key"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -27,13 +29,29 @@ func (p *participant) MarshalJSON() ([]byte, error) {
 	return p.meta, nil
 }
 
-func parseKey(id string) error {
-	bytes := make([]byte)
-	parsed, err := base64.StdEncoding.Decode(bytes, []byte(id))
+type Message struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"data"`
+}
 
+type ChallengeMessage struct {
+	Payload string `json:"payload"`
+}
 
-
-	return err
+func createChallenge() (Message, error) {
+	payload := make([]byte, 32)
+	rand.Read(payload)
+	msg := ChallengeMessage{
+		Payload: base64.RawStdEncoding.EncodeToString(payload),
+	}
+	data, err := json.Marshal(msg)
+	if err != nil {
+		return Message{}, err
+	}
+	return Message{
+		Type: "CHALLENGE",
+		Data: data,
+	}, nil
 }
 
 func main() {
@@ -43,14 +61,32 @@ func main() {
 
 		userId, ok := vars["userid"]
 		if !ok {
-			log.Err(errors.New("The user ID was not set, for some reason. This is bad"))
+			log.Err(errors.New("the user ID was not set, for some reason. This is bad"))
 			w.WriteHeader(500)
 			w.Write([]byte("Internal server error. Failed to parse User ID"))
 		}
 
+		verifier, err := key.CreateVerifier(userId)
+		if err != nil {
+			log.Err(fmt.Errorf("failed to parse the user ID as a valid key", userId))
+			w.WriteHeader(500)
+			w.Write([]byte("Internal server error. Failed to parse User ID"))
+		}
+		if verifier.IsKeyValid() {
+			w.WriteHeader(400)
+			w.Write([]byte("The user ID must be a valid key format. Remember: tbe user ID will double as a public key"))
+		}
+
+		challenge, err := createChallenge()
+		if err != nil {
+			log.Err(err)
+			w.WriteHeader(500)
+			w.Write([]byte("Failed to create challenge message. Investigation is needed"))
+		}
+
 		id, ok := vars["id"]
 		if !ok {
-			log.Err(errors.New("The ID was not set, for some reason. This is bad"))
+			log.Err(errors.New("the ID was not set, for some reason. This is bad"))
 			w.WriteHeader(500)
 			w.Write([]byte("Internal server error. Failed to parse ID"))
 		}
@@ -63,16 +99,20 @@ func main() {
 			return
 		}
 
-		c.WriteJSON(v interface{})
+		// t := trees.getTree(id)
+		// listener := t.RegisterChangeListener(userId)
 
-		t := trees.getTree(id)
-		listener := t.RegisterChangeListener(userId)
+		c.WriteJSON(challenge)
 
-		go func() {
-			switch ev := (<-listener).(type) {
-			case spanningtree.NodeState:
-				
-			}
-		}()
+		// Hm… Should we be conservative, and close the connection if the client
+		// does not send a challenge response as the first message, or should we
+		// be liberal, and loop until we get a valid response?
+
+		// go func() {
+		// 	switch ev := (<-listener).(type) {
+		// 	case spanningtree.NodeState:
+
+		// 	}
+		// }()
 	})
 }
