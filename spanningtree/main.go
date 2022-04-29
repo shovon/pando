@@ -35,14 +35,19 @@ type Message struct {
 }
 
 type ChallengeMessage struct {
-	Payload string `json:"payload"`
+	Message string `json:"message"`
+}
+
+type ChallengeResponse struct {
+	Message   string `json:"message"`
+	Signature string `json:"signature"`
 }
 
 func createChallenge() (Message, error) {
 	payload := make([]byte, 32)
 	rand.Read(payload)
 	msg := ChallengeMessage{
-		Payload: base64.RawStdEncoding.EncodeToString(payload),
+		Message: base64.RawStdEncoding.EncodeToString(payload),
 	}
 	data, err := json.Marshal(msg)
 	if err != nil {
@@ -50,6 +55,26 @@ func createChallenge() (Message, error) {
 	}
 	return Message{
 		Type: "CHALLENGE",
+		Data: data,
+	}, nil
+}
+
+type ErrorResponse struct {
+	ID     *string     `json:"id",omitempty"`
+	Code   *string     `json:"code,omitempty"`
+	Title  *string     `json:"title,omitempty"`
+	Detail *string     `json:"detail,omitempty"`
+	Meta   interface{} `json:"meta,omitempty"`
+}
+
+func createErrorResponse(err ErrorResponse) (Message, error) {
+	data, e := json.Marshal(err)
+	if e != nil {
+		return Message{}, e
+	}
+
+	return Message{
+		Type: "ERROR",
 		Data: data,
 	}, nil
 }
@@ -68,7 +93,7 @@ func main() {
 
 		verifier, err := key.CreateVerifier(userId)
 		if err != nil {
-			log.Err(fmt.Errorf("failed to parse the user ID as a valid key", userId))
+			log.Error().Err(fmt.Errorf("failed to parse the user ID as a valid key", userId))
 			w.WriteHeader(500)
 			w.Write([]byte("Internal server error. Failed to parse User ID"))
 		}
@@ -79,21 +104,21 @@ func main() {
 
 		challenge, err := createChallenge()
 		if err != nil {
-			log.Err(err)
+			log.Error().Err(err)
 			w.WriteHeader(500)
 			w.Write([]byte("Failed to create challenge message. Investigation is needed"))
 		}
 
 		id, ok := vars["id"]
 		if !ok {
-			log.Err(errors.New("the ID was not set, for some reason. This is bad"))
+			log.Error().Err(errors.New("the ID was not set, for some reason. This is bad"))
 			w.WriteHeader(500)
 			w.Write([]byte("Internal server error. Failed to parse ID"))
 		}
 
 		c, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
-			log.Err(err)
+			log.Error().Err(err)
 			w.WriteHeader(500)
 			w.Write([]byte("An internal server error occurred"))
 			return
@@ -104,9 +129,37 @@ func main() {
 
 		c.WriteJSON(challenge)
 
-		// Hm… Should we be conservative, and close the connection if the client
-		// does not send a challenge response as the first message, or should we
-		// be liberal, and loop until we get a valid response?
+		var msg Message
+
+		for {
+
+			err := c.ReadJSON(&msg)
+
+			if err != nil {
+				log.Info().Err(err).Msg("Bad JSON message received")
+			}
+
+			if msg.Type != "CHALLENGE_RESPONSE" {
+				title := fmt.Sprintf("Expected a message of type CHALLENGE_RESPONSE, but got %s", msg.Type)
+				msg, err := createErrorResponse(ErrorResponse{Title: &title})
+				if err != nil {
+					log.Panic().Err(err)
+				}
+				c.WriteJSON(msg)
+				c.Close()
+				return
+			}
+
+			var response ChallengeResponse
+
+			err := json.Unmarshal(msg.Data, &response)
+			if err != nil {
+				log.Info().Err(err).Msg("Bad challenge response payload given")
+				msg, err := createErrorResponse(ErrorResponse{})
+
+			}
+
+		}
 
 		// go func() {
 		// 	switch ev := (<-listener).(type) {
