@@ -1,4 +1,4 @@
-package key
+package kidv1
 
 import (
 	"crypto/ecdsa"

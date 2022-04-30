@@ -1,4 +1,4 @@
-package key
+package kidv1
 
 import (
 	"crypto/ecdsa"
@@ -6,13 +6,14 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"math/big"
+	"spanningtree/keyid"
 )
 
 type V1Verifier struct {
 	key string
 }
 
-var _ Verifier = &V1Verifier{}
+var _ keyid.Verifier = &V1Verifier{}
 
 func toBigInt(b []byte) (i *big.Int) {
 	i = &big.Int{}
@@ -27,7 +28,7 @@ func (v *V1Verifier) Verify(message, signature []byte) (bool, error) {
 	}
 	header := value[0]
 	if header != 0x04 {
-		return false, ErrBadKeyFormat
+		return false, keyid.ErrBadKeyFormat
 	}
 	if len(signature) != 64 {
 		return false, nil
