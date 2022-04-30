@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"spanningtree/key"
+	"uag/key"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
