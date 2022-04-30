@@ -7,13 +7,15 @@ import (
 
 var ErrBadKeyFormat = errors.New("the supplied key format is bad")
 
+const separator = "$"
+
 func CreateVerifier(key string) (Verifier, error) {
-	parts := strings.Split(key, ".")
+	parts := strings.Split(key, separator)
 	version, remainder := parts[0], parts[1:]
 
 	switch version {
 	case "v1":
-		return parseV1(strings.Join(remainder, "."))
+		return parseV1(strings.Join(remainder, separator))
 	default:
 		return &BadVerifier{}, errors.New("not a valid key")
 	}
