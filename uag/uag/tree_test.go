@@ -1,4 +1,4 @@
-package spanningtree
+package uag
 
 import (
 	"sync"

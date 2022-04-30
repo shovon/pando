@@ -1,3 +1,3 @@
-package spanningtree
+package uag
 
 type Deleted struct{}

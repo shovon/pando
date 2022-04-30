@@ -2,6 +2,7 @@ package keyid
 
 import (
 	"errors"
+	"spanningtree/keyid/kidv1"
 	"strings"
 )
 
@@ -28,5 +29,5 @@ func CreateVerifier(key string) (Verifier, error) {
 // - a 32-byte x coordinate
 // - a 32-byte y coordinate
 func parseV1(key string) (Verifier, error) {
-	return &V1Verifier{key}, nil
+	return &kidv1.V1Verifier{key}, nil
 }

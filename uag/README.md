@@ -1,8 +1,8 @@
-# spanningtree
+# uag
 
-This is a document that describes the distributed spanning tree client-server protocol.
+This is a document that describes the distributed tree.
 
-Summary: nodes will not be auto-arranging themselves into a spanning tree topology; instead it's a server that will hold a representation of how the clients will connect with each other.
+Summary: nodes will not be auto-arranging themselves into a tree topology; instead it's a server that will hold a representation of how the clients will be related to each other.
 
 Properties of the server's internal representation of a tree will be the following:
 
@@ -10,7 +10,7 @@ Properties of the server's internal representation of a tree will be the followi
 - the graph will be acyclic
 - the graph will be undirected
 
-By the definition of the last two-points, the graph will therefore be a spanning tree.
+By the definition of the last two-points, the graph will therefore be a tree.
 
 If two non-neighbouring nodes need to communicate with eachother, either the application utilizing the spanning tree will need to design the application to support the act of relaying messages from node-to-node, or the application will need to utilize a third-party server, unrelated to the spanningtree server
 

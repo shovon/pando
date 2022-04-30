@@ -1,4 +1,4 @@
-module spanningtree
+module uag
 
 go 1.17
 

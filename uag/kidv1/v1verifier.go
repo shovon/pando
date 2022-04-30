@@ -10,7 +10,7 @@ import (
 )
 
 type V1Verifier struct {
-	key string
+	Key string
 }
 
 var _ keyid.Verifier = &V1Verifier{}
@@ -22,7 +22,7 @@ func toBigInt(b []byte) (i *big.Int) {
 }
 
 func (v *V1Verifier) Verify(message, signature []byte) (bool, error) {
-	value, err := base64.RawStdEncoding.DecodeString(v.key)
+	value, err := base64.RawStdEncoding.DecodeString(v.Key)
 	if err != nil {
 		return false, err
 	}
@@ -48,7 +48,7 @@ func (v *V1Verifier) Verify(message, signature []byte) (bool, error) {
 }
 
 func (v *V1Verifier) IsKeyValid() bool {
-	value, err := base64.RawStdEncoding.DecodeString(v.key)
+	value, err := base64.RawStdEncoding.DecodeString(v.Key)
 	if err != nil {
 		return false
 	}
