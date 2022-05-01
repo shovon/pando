@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func compareTree(t *testing.T, m map[string]int, tree *Tree) {
+func compareTree(t *testing.T, m map[string]int, tree *BinaryTree) {
 	treeChan := tree.Iterate()
 	for pair := range treeChan {
 		key, value := pair.Key, pair.Value
@@ -29,7 +29,7 @@ func compareTree(t *testing.T, m map[string]int, tree *Tree) {
 }
 
 func TestInsert(t *testing.T) {
-	tree := &Tree{}
+	tree := &BinaryTree{}
 
 	m := map[string]int{
 		"hello":   1,
@@ -51,7 +51,7 @@ func TestInsert(t *testing.T) {
 }
 
 func TestIterate(t *testing.T) {
-	tree := &Tree{}
+	tree := &BinaryTree{}
 
 	tree.Insert("hello", 1)
 	tree.Insert("world", 2)
@@ -91,7 +91,7 @@ func TestIterate(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	tree := &Tree{}
+	tree := &BinaryTree{}
 
 	m := map[string]int{
 		"hello":   1,
@@ -114,7 +114,7 @@ func TestDelete(t *testing.T) {
 }
 
 func TestTreeEmpty(t *testing.T) {
-	tree := &Tree{}
+	tree := &BinaryTree{}
 
 	tree.Insert("cool", 1)
 	tree.Insert("nice", 1)
@@ -137,7 +137,7 @@ func TestTreeEmpty(t *testing.T) {
 }
 
 func TestInsertDelete(t *testing.T) {
-	tree := &Tree{}
+	tree := &BinaryTree{}
 
 	tree.Insert("cool", 1)
 	tree.Delete("cool")
@@ -159,7 +159,7 @@ func TestInsertDelete(t *testing.T) {
 }
 
 func TestFind(t *testing.T) {
-	tree := &Tree{}
+	tree := &BinaryTree{}
 
 	tree.Insert("hello", 1)
 	tree.Insert("world", 2)
@@ -194,7 +194,7 @@ func TestFind(t *testing.T) {
 }
 
 func TestEvent(t *testing.T) {
-	tree := &Tree{}
+	tree := &BinaryTree{}
 
 	listener := tree.RegisterChangeListener("hello")
 
@@ -220,7 +220,7 @@ func TestEvent(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	tree := &Tree{}
+	tree := &BinaryTree{}
 
 	// listener := tree.RegisterChangeListener("hello")
 
@@ -272,7 +272,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestUpsert(t *testing.T) {
-	tree := &Tree{}
+	tree := &BinaryTree{}
 
 	tree.Insert("hello", 1)
 	tree.Upsert("something", 20)

@@ -8,20 +8,20 @@ import (
 type treeManager struct {
 	treeMut    sync.RWMutex
 	managerMut sync.RWMutex
-	trees      map[string]*spanningtree.Tree
+	trees      map[string]*spanningtree.BinaryTree
 }
 
 func newTreeManager() treeManager {
-	return treeManager{trees: make(map[string]*spanningtree.Tree)}
+	return treeManager{trees: make(map[string]*spanningtree.BinaryTree)}
 }
 
-func (t *treeManager) getTree(id string) *spanningtree.Tree {
+func (t *treeManager) getTree(id string) *spanningtree.BinaryTree {
 	t.managerMut.Lock()
 	defer t.managerMut.Unlock()
 
 	tree, ok := t.trees[id]
 	if !ok {
-		tree = &spanningtree.Tree{}
+		tree = &spanningtree.BinaryTree{}
 		t.trees[id] = tree
 	}
 

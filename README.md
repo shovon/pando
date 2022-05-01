@@ -1,6 +1,6 @@
-# Pando: distributed spanning tree
+# Pando: distributed tree
 
-Broadcasting real-time media over a [spanning tree](https://en.wikipedia.org/wiki/Spanning_tree) network.
+Broadcasting real-time media over a [tree](<https://en.wikipedia.org/wiki/Tree_(data_structure)>) network.
 
 Let's see if this even works.
 

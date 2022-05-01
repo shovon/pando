@@ -7,10 +7,10 @@ import (
 	"sync"
 )
 
-// Tree represents a spanning tree data structure.
+// BinaryTree represents a spanning tree data structure.
 
 // All public operations on this tree (including reads) are thread-safe
-type Tree struct {
+type BinaryTree struct {
 	mut  sync.RWMutex
 	root *node.Node
 
@@ -19,10 +19,10 @@ type Tree struct {
 	KeyMarshalerCreator   genericMarshalerCreator
 }
 
-var _ json.Marshaler = &Tree{}
+var _ json.Marshaler = &BinaryTree{}
 
 // MarshalJSON marshals the tree to a JSON representation
-func (t *Tree) MarshalJSON() ([]byte, error) {
+func (t *BinaryTree) MarshalJSON() ([]byte, error) {
 	t.mut.RLock()
 	defer t.mut.RUnlock()
 
@@ -103,19 +103,19 @@ func marshalNode(
 }
 
 // RegisterChangeListener creates a channel that serves as the event listener
-func (t *Tree) RegisterChangeListener(key interface{}) <-chan interface{} {
+func (t *BinaryTree) RegisterChangeListener(key interface{}) <-chan interface{} {
 	return t.listeners.RegisterListener(key)
 }
 
 // Insert inserts a key/value par into the tree
-func (t *Tree) Insert(key, value interface{}) {
+func (t *BinaryTree) Insert(key, value interface{}) {
 	t.mut.Lock()
 	defer t.mut.Unlock()
 
 	t.unsafeInsert(key, value)
 }
 
-func (t *Tree) unsafeInsert(key, value interface{}) {
+func (t *BinaryTree) unsafeInsert(key, value interface{}) {
 	node := node.NewNode(key, value)
 	defer t.emitChangeEvent()
 
@@ -127,7 +127,7 @@ func (t *Tree) unsafeInsert(key, value interface{}) {
 	t.root.Insert(node)
 }
 
-func (t *Tree) UpdateValue(key, value interface{}) bool {
+func (t *BinaryTree) UpdateValue(key, value interface{}) bool {
 	t.mut.Lock()
 	defer t.mut.Unlock()
 
@@ -144,7 +144,7 @@ func (t *Tree) UpdateValue(key, value interface{}) bool {
 	return updated
 }
 
-func (t *Tree) Upsert(key, value interface{}) {
+func (t *BinaryTree) Upsert(key, value interface{}) {
 	t.mut.Lock()
 	defer t.mut.Unlock()
 
@@ -167,7 +167,7 @@ func (t *Tree) Upsert(key, value interface{}) {
 	}
 }
 
-func (t *Tree) Find(key interface{}) (NodeState, bool) {
+func (t *BinaryTree) Find(key interface{}) (NodeState, bool) {
 	t.mut.RLock()
 	defer t.mut.RUnlock()
 
@@ -179,7 +179,7 @@ func (t *Tree) Find(key interface{}) (NodeState, bool) {
 	return NewNodeState(node), true
 }
 
-func (t *Tree) unsafeFind(key interface{}) *node.Node {
+func (t *BinaryTree) unsafeFind(key interface{}) *node.Node {
 	if t.root == nil {
 		return nil
 	}
@@ -188,7 +188,7 @@ func (t *Tree) unsafeFind(key interface{}) *node.Node {
 }
 
 // Delete delets a node from the tree, given a key
-func (t *Tree) Delete(key interface{}) bool {
+func (t *BinaryTree) Delete(key interface{}) bool {
 	t.mut.Lock()
 	defer t.mut.Unlock()
 
@@ -219,13 +219,13 @@ func (t *Tree) Delete(key interface{}) bool {
 	return deleted
 }
 
-func (t *Tree) emitChangeEvent() {
+func (t *BinaryTree) emitChangeEvent() {
 	for node := range t.iterateUnsafe() {
 		t.listeners.EmitEvent(node.Key(), NewNodeState(node))
 	}
 }
 
-func (t *Tree) iterateSafe() <-chan *node.Node {
+func (t *BinaryTree) iterateSafe() <-chan *node.Node {
 	c := make(chan *node.Node)
 
 	go func() {
@@ -245,7 +245,7 @@ func (t *Tree) iterateSafe() <-chan *node.Node {
 	return c
 }
 
-func (t *Tree) iterateUnsafe() <-chan *node.Node {
+func (t *BinaryTree) iterateUnsafe() <-chan *node.Node {
 	c := make(chan *node.Node)
 
 	go func() {
@@ -264,7 +264,7 @@ func (t *Tree) iterateUnsafe() <-chan *node.Node {
 }
 
 // Iterate iterates all key-value pairs in the tree
-func (t *Tree) Iterate() <-chan Pair {
+func (t *BinaryTree) Iterate() <-chan Pair {
 	t.mut.RLock()
 	defer t.mut.RUnlock()
 
@@ -290,7 +290,7 @@ func (t *Tree) Iterate() <-chan Pair {
 	return c
 }
 
-func (t *Tree) Cardinality() int {
+func (t *BinaryTree) Cardinality() int {
 	t.mut.RLock()
 	defer t.mut.RUnlock()
 
@@ -301,7 +301,7 @@ func (t *Tree) Cardinality() int {
 	return t.root.Cardinality()
 }
 
-func (t *Tree) IsEmpty() bool {
+func (t *BinaryTree) IsEmpty() bool {
 	t.mut.RLock()
 	defer t.mut.RUnlock()
 
