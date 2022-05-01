@@ -6,14 +6,15 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"math/big"
-	"spanningtree/keyid"
+	keyiderrors "tree/keyid/errors"
+	"tree/keyid/verifier"
 )
 
 type V1Verifier struct {
 	Key string
 }
 
-var _ keyid.Verifier = &V1Verifier{}
+var _ verifier.Verifier = &V1Verifier{}
 
 func toBigInt(b []byte) (i *big.Int) {
 	i = &big.Int{}
@@ -28,7 +29,7 @@ func (v *V1Verifier) Verify(message, signature []byte) (bool, error) {
 	}
 	header := value[0]
 	if header != 0x04 {
-		return false, keyid.ErrBadKeyFormat
+		return false, keyiderrors.ErrBadKeyFormat
 	}
 	if len(signature) != 64 {
 		return false, nil

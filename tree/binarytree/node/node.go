@@ -248,8 +248,31 @@ func (n Node) Iterate() <-chan *Node {
 	return c
 }
 
+// Cardinality ets the number of nodes in the entire subtree (including itself)
 func (n Node) Cardinality() int {
 	return 1 + nodeCardinality(n.left) + nodeCardinality(n.right)
+}
+
+func (n Node) GetAdjacencyList() []AdjacencyNode {
+	p := Pair{n.Key(), n.Value()}
+	keys := []interface{}{}
+	if n.parent != nil {
+		keys = append(keys, n.parent.Key())
+	}
+	left, right := []AdjacencyNode{}, []AdjacencyNode{}
+	if n.left != nil {
+		left = n.left.GetAdjacencyList()
+		keys = append(keys, n.left.Key())
+	}
+	if n.right != nil {
+		right = n.right.GetAdjacencyList()
+		keys = append(keys, n.right.Key())
+	}
+	node := AdjacencyNode{p, keys}
+	nodes := []AdjacencyNode{node}
+	nodes = append(nodes, left...)
+	nodes = append(nodes, right...)
+	return nodes
 }
 
 func nodeCardinality(node *Node) int {

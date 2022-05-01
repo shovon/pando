@@ -1,12 +1,12 @@
 package main
 
 import (
-	"binarytree/key"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"tree/keyid"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -44,7 +44,7 @@ func main() {
 			w.Write([]byte("Internal server error. Failed to parse User ID"))
 		}
 
-		verifier, err := key.CreateVerifier(clientId)
+		verifier, err := keyid.CreateVerifier(clientId)
 		if err != nil {
 			log.Error().Err(fmt.Errorf("failed to parse the user ID as a valid key", clientId))
 			w.WriteHeader(500)

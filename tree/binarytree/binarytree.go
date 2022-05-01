@@ -2,9 +2,9 @@ package binarytree
 
 import (
 	"encoding/json"
-	"spanningtree/listeners"
-	"spanningtree/spanningtree/node"
 	"sync"
+	"tree/binarytree/node"
+	"tree/listeners"
 )
 
 // BinaryTree represents a spanning tree data structure.
@@ -264,11 +264,11 @@ func (t *BinaryTree) iterateUnsafe() <-chan *node.Node {
 }
 
 // Iterate iterates all key-value pairs in the tree
-func (t *BinaryTree) Iterate() <-chan Pair {
+func (t *BinaryTree) Iterate() <-chan node.Pair {
 	t.mut.RLock()
 	defer t.mut.RUnlock()
 
-	c := make(chan Pair)
+	c := make(chan node.Pair)
 
 	if t.root == nil {
 		close(c)
@@ -279,8 +279,8 @@ func (t *BinaryTree) Iterate() <-chan Pair {
 		t.mut.RLock()
 		defer t.mut.RUnlock()
 
-		for node := range t.root.Iterate() {
-			pair := Pair{node.Key(), node.Value()}
+		for n := range t.root.Iterate() {
+			pair := node.Pair{n.Key(), n.Value()}
 			c <- pair
 		}
 
@@ -288,6 +288,17 @@ func (t *BinaryTree) Iterate() <-chan Pair {
 	}()
 
 	return c
+}
+
+func (t *BinaryTree) GetAdjacencyList() []node.AdjacencyNode {
+	t.mut.RLock()
+	defer t.mut.RUnlock()
+
+	if t.root == nil {
+		return []node.AdjacencyNode{}
+	}
+
+	return t.root.GetAdjacencyList()
 }
 
 func (t *BinaryTree) Cardinality() int {

@@ -2,12 +2,12 @@ package binarytree
 
 import (
 	"encoding/json"
-	"spanningtree/spanningtree/node"
+	"tree/binarytree/node"
 )
 
 type NodeState struct {
-	Node                  Pair
-	Neighbors             []Pair
+	Node                  node.Pair
+	Neighbors             []node.Pair
 	ValueMarshalerCreator genericMarshalerCreator
 	KeyMarshalerCreator   genericMarshalerCreator
 }
@@ -52,7 +52,7 @@ func (n *NodeState) MarshalJSON() ([]byte, error) {
 }
 
 func marshalPair(
-	nodeState Pair,
+	nodeState node.Pair,
 	valueMarshalerCreator,
 	keyMarshalerCreator genericMarshalerCreator,
 ) (json.RawMessage, error) {
@@ -64,15 +64,15 @@ func marshalPair(
 	return json.Marshal(pair(nodeState))
 }
 
-func pairFromNode(n *node.Node) Pair {
-	return Pair{n.Key(), n.Value()}
+func pairFromNode(n *node.Node) node.Pair {
+	return node.Pair{n.Key(), n.Value()}
 }
 
 // NewNodeState creates a new NodeState object.
 //
 // Note: this is not thread safe!
 func NewNodeState(n *node.Node) NodeState {
-	nodes := []Pair{}
+	nodes := []node.Pair{}
 	parent := n.Parent()
 	left := n.Left()
 	right := n.Right()

@@ -1,4 +1,4 @@
-package keyid
+package verifier
 
 type Verifier interface {
 	Verify([]byte, []byte) (bool, error)

@@ -2,15 +2,14 @@ package keyid
 
 import (
 	"errors"
-	"spanningtree/keyid/kidv1"
 	"strings"
+	"tree/keyid/verifier"
+	"tree/kidv1"
 )
-
-var ErrBadKeyFormat = errors.New("the supplied key format is bad")
 
 const separator = "$"
 
-func CreateVerifier(key string) (Verifier, error) {
+func CreateVerifier(key string) (verifier.Verifier, error) {
 	parts := strings.Split(key, separator)
 	version, remainder := parts[0], parts[1:]
 
@@ -28,6 +27,6 @@ func CreateVerifier(key string) (Verifier, error) {
 // - literally the number 0x04, as a single byte
 // - a 32-byte x coordinate
 // - a 32-byte y coordinate
-func parseV1(key string) (Verifier, error) {
+func parseV1(key string) (verifier.Verifier, error) {
 	return &kidv1.V1Verifier{key}, nil
 }

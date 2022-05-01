@@ -1,27 +1,27 @@
 package main
 
 import (
-	"spanningtree/spanningtree"
 	"sync"
+	"tree/binarytree"
 )
 
 type treeManager struct {
 	treeMut    sync.RWMutex
 	managerMut sync.RWMutex
-	trees      map[string]*spanningtree.BinaryTree
+	trees      map[string]*binarytree.BinaryTree
 }
 
 func newTreeManager() treeManager {
-	return treeManager{trees: make(map[string]*spanningtree.BinaryTree)}
+	return treeManager{trees: make(map[string]*binarytree.BinaryTree)}
 }
 
-func (t *treeManager) getTree(id string) *spanningtree.BinaryTree {
+func (t *treeManager) getTree(id string) *binarytree.BinaryTree {
 	t.managerMut.Lock()
 	defer t.managerMut.Unlock()
 
 	tree, ok := t.trees[id]
 	if !ok {
-		tree = &spanningtree.BinaryTree{}
+		tree = &binarytree.BinaryTree{}
 		t.trees[id] = tree
 	}
 
