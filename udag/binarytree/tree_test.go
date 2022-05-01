@@ -1,4 +1,4 @@
-package uag
+package binarytree
 
 import (
 	"sync"

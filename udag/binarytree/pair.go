@@ -1,4 +1,4 @@
-package uag
+package binarytree
 
 type Pair struct {
 	Key   interface{}

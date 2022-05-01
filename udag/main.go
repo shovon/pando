@@ -1,12 +1,12 @@
 package main
 
 import (
+	"binarytree/key"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
-	"uag/key"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"

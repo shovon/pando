@@ -1,4 +1,4 @@
-module uag
+module udag
 
 go 1.17
 

@@ -1,6 +1,6 @@
-# uag
+# udag
 
-This is a document that describes the distributed tree.
+This is a document that describes the distributed udag management server.
 
 Summary: nodes will not be auto-arranging themselves into a tree topology; instead it's a server that will hold a representation of how the clients will be related to each other.
 

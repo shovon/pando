@@ -1,3 +1,3 @@
-package uag
+package binarytree
 
 type Deleted struct{}
