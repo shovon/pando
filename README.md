@@ -6,4 +6,4 @@ Let's see if this even works.
 
 ## Getting started
 
-Everything is in the `spanningtree` folder
+Everything is in the `udag` folder
