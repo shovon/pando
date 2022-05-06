@@ -280,7 +280,7 @@ func (t *BinaryTree) Iterate() <-chan node.Pair {
 		defer t.mut.RUnlock()
 
 		for n := range t.root.Iterate() {
-			pair := node.Pair{n.Key(), n.Value()}
+			pair := node.Pair{Key: n.Key(), Value: n.Value()}
 			c <- pair
 		}
 

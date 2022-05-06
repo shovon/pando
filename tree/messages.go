@@ -6,9 +6,17 @@ import (
 	"encoding/json"
 )
 
-type Message struct {
+type Message interface {
+	MessageWithData | MessageNoData
+}
+
+type MessageWithData struct {
 	Type string          `json:"type"`
 	Data json.RawMessage `json:"data"`
+}
+
+type MessageNoData struct {
+	Type string `json:"type"`
 }
 
 type ChallengeMessage struct {
@@ -16,11 +24,19 @@ type ChallengeMessage struct {
 }
 
 type ChallengeResponse struct {
-	Message   string `json:"message"`
-	Signature string `json:"signature"`
+	Message   string          `json:"message"`
+	Signature json.RawMessage `json:"signature"`
 }
 
-func createChallenge() (Message, error) {
+func createMessage(title string, data interface{}) (MessageWithData, error) {
+	msg, err := json.Marshal(data)
+	if err != nil {
+		return MessageWithData{}, err
+	}
+	return MessageWithData{title, msg}, nil
+}
+
+func createChallenge() (MessageWithData, error) {
 	payload := make([]byte, 32)
 	rand.Read(payload)
 	msg := ChallengeMessage{
@@ -28,29 +44,47 @@ func createChallenge() (Message, error) {
 	}
 	data, err := json.Marshal(msg)
 	if err != nil {
-		return Message{}, err
+		return MessageWithData{}, err
 	}
-	return Message{
+	return MessageWithData{
 		Type: "CHALLENGE",
 		Data: data,
 	}, nil
 }
 
+func createClientError(title string, payload interface{}) (MessageWithData, error) {
+	data, err := createMessage(title, payload)
+	if err != nil {
+		return MessageWithData{}, err
+	}
+
+	return createMessage("CLIENT_ERROR", data)
+}
+
+func createServerError(title string, payload interface{}) (MessageWithData, error) {
+	data, err := createMessage(title, payload)
+	if err != nil {
+		return MessageWithData{}, err
+	}
+
+	return createMessage("SERVER_ERROR", data)
+}
+
 type ErrorResponse struct {
-	ID     *string     `json:"id,omitempty"`
-	Code   *string     `json:"code,omitempty"`
-	Title  *string     `json:"title,omitempty"`
-	Detail *string     `json:"detail,omitempty"`
+	ID     string      `json:"id,omitempty"`
+	Code   string      `json:"code,omitempty"`
+	Title  string      `json:"title,omitempty"`
+	Detail string      `json:"detail,omitempty"`
 	Meta   interface{} `json:"meta,omitempty"`
 }
 
-func createErrorResponse(err ErrorResponse) (Message, error) {
+func createErrorResponse(err ErrorResponse) (MessageWithData, error) {
 	data, e := json.Marshal(err)
 	if e != nil {
-		return Message{}, e
+		return MessageWithData{}, e
 	}
 
-	return Message{
+	return MessageWithData{
 		Type: "ERROR",
 		Data: data,
 	}, nil

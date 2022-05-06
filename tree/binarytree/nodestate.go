@@ -65,7 +65,7 @@ func marshalPair(
 }
 
 func pairFromNode(n *node.Node) node.Pair {
-	return node.Pair{n.Key(), n.Value()}
+	return node.Pair{Key: n.Key(), Value: n.Value()}
 }
 
 // NewNodeState creates a new NodeState object.
