@@ -79,15 +79,15 @@ func getIds(r *http.Request, c *websocket.Conn) (clientTree, bool) {
 	return clientTree{clientId: clientId, treeId: id}, false
 }
 
-func challengeClient() {
+func challengeClient(c *websocket.Conn) {
 	payload := make([]byte, 32)
 	rand.Read(payload)
 
-	// _ := ChallengeMessage{
-	// 	Message: base64.RawStdEncoding.EncodeToString(payload),
-	// }
+	message := ChallengeMessage{
+		Message: base64.RawStdEncoding.EncodeToString(payload),
+	}
 
-	panic("Not yet completed")
+	c.WriteJSON(message)
 }
 
 type Sec256r1Key struct {
