@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"tree/messages/clientmessages"
+	"tree/messages/servermessages"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -44,16 +46,12 @@ func getIds(r *http.Request, c *websocket.Conn) (clientTree, bool) {
 	clientId := strings.TrimSpace(r.URL.Query().Get("client_id"))
 	if len(clientId) <= 0 {
 		log.Info().Msg("The client did not supply a client ID. Returning without client ID nor tree ID")
-		msg, err := createClientError(
-			"CLIENT_ID_NOT_SET",
-			ErrorResponse{
+		msg := servermessages.CreateClientError(
+			servermessages.ErrorResponse{
 				Title:  "Client ID has not been set",
 				Detail: "Please set the relevant client ID, via the `client_id` query parameter",
 			},
 		)
-		if err != nil {
-			log.Panic().Err(err)
-		}
 		c.WriteJSON(msg)
 		return clientTree{}, false
 	}
@@ -65,13 +63,10 @@ func getIds(r *http.Request, c *websocket.Conn) (clientTree, bool) {
 	id, ok := vars["id"]
 	if !ok {
 		log.Error().Err(errors.New("the tree ID was not set, for some reason. This is bad"))
-		msg, err := createServerError("TREE_ID_NOT SET", ErrorResponse{
+		msg := servermessages.CreateClientError(servermessages.ErrorResponse{
 			Title:  "Tree ID not set",
 			Detail: "A server error has resulted in the tree ID not being set on the server",
 		})
-		if err != nil {
-			log.Panic().Err(err)
-		}
 		c.WriteJSON(msg)
 		return clientTree{}, false
 	}
@@ -88,33 +83,49 @@ func challengeClient(c *websocket.Conn) {
 	}
 
 	c.WriteJSON(message)
+
+	for {
+		var message servermessages.MessageWithData
+		err := c.ReadJSON(&message)
+		if err != nil {
+			title := "Bad JSON message received"
+			log.Info().Err(err).Msg(title)
+			c.WriteJSON(servermessages.CreateClientError(servermessages.ErrorResponse{Title: title}))
+			continue
+		}
+	}
 }
 
-type Sec256r1Key struct {
+type SecP256R1Key struct {
 	X [32]byte
 	Y [32]byte
 }
 
-func getSec256r1Key(str string) (Sec256r1Key, error) {
-	b, err := base64.RawStdEncoding.DecodeString(str)
-	if err != nil {
-		return Sec256r1Key{}, err
-	}
+func getSecP256R1Key(b []byte) (SecP256R1Key, error) {
 	if len(b) != 65 {
-		return Sec256r1Key{}, fmt.Errorf("the key must be a 65-byte buffer, but but %d", len(b))
+		return SecP256R1Key{}, fmt.Errorf("the key must be a 65-byte buffer, but got a %d byte buffer", len(b))
 	}
 	if b[0] != 4 {
-		return Sec256r1Key{}, fmt.Errorf("the key must be an x and y coordinate key. This is indicated by the first byte of the key. The first byte must be of value 4, but got %d", len(b))
+		return SecP256R1Key{}, fmt.Errorf("the key must be an x and y coordinate key. This is indicated by the first byte of the key. The first byte must be of value 4, but got %d", len(b))
 	}
 	var x [32]byte
 	var y [32]byte
 	copy(x[:], b[1:33])
 	copy(y[:], b[33:])
 
-	return Sec256r1Key{X: x, Y: x}, nil
+	return SecP256R1Key{X: x, Y: x}, nil
+}
+
+func isSecP256R1Key(b []byte) bool {
+	var identifier int16
+	identifier = int16(b[0]) << 8
+	identifier = identifier & int16(b[1])
+	return identifier == 0x01
 }
 
 func handleTree(w http.ResponseWriter, r *http.Request) {
+	// This is the HandlerFunc that will handle the WebSocket for adding a new
+	// node to the tree
 
 	// Upgarde the WebSocket connection
 	c, err := upgrader.Upgrade(w, r, nil)
@@ -122,8 +133,9 @@ func handleTree(w http.ResponseWriter, r *http.Request) {
 		log.Error().Err(err)
 		return
 	}
+	defer c.Close()
 
-	// Get the IDs for the client and the tree
+	// Get the IDs for the client and the tree from the URL
 	ct, success := getIds(r, c)
 	if !success {
 		log.Info().Msg("Failed to get client and tree ID. Closing the connectiong")
@@ -141,7 +153,7 @@ func handleTree(w http.ResponseWriter, r *http.Request) {
 
 	c.WriteJSON(challenge)
 
-	var msg MessageWithData
+	var msg clientmessages.Message
 
 	for {
 
@@ -151,35 +163,36 @@ func handleTree(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			title := "Bad JSON message received"
 			log.Info().Err(err).Msg(title)
-			msg, err := createErrorResponse(ErrorResponse{Title: title})
-			if err != nil {
-				log.Panic().Err(err)
-			}
-			c.WriteJSON(msg)
+			c.WriteJSON(servermessages.CreateClientError(servermessages.ErrorResponse{Title: title}))
+
+			// Next iteration, until the client
 			continue
 		}
 
+		//unt
 		if msg.Type != "CHALLENGE_RESPONSE" {
 			title := fmt.Sprintf("Expected a message of type CHALLENGE_RESPONSE, but got %s", msg.Type)
-			msg, err := createErrorResponse(ErrorResponse{Title: title})
-			if err != nil {
-				log.Panic().Err(err)
-			}
-			c.WriteJSON(msg)
+			log.Info().Err(err).Msg(title)
+			c.WriteJSON(servermessages.CreateClientError(servermessages.ErrorResponse{Title: title}))
+
+			// Next iteration, il the client provides an appropriate value.
 			continue
 		}
 
-		var response ChallengeResponse
+		type challengeResponse struct {
+			Signature string `json:"signature"`
+			Message   string `json:"message"`
+		}
+
+		var response challengeResponse
 
 		err = json.Unmarshal(msg.Data, &response)
 		if err != nil {
 			title := "Bad challenge response payload given"
 			log.Info().Err(err).Msg(title)
-			msg, err := createErrorResponse(ErrorResponse{Title: title})
-			if err != nil {
-				log.Panic().Err(err)
-			}
-			c.WriteJSON(msg)
+			c.WriteJSON(servermessages.CreateClientError(servermessages.ErrorResponse{Title: title}))
+
+			// Next iteration, until the client provides an appropriate value.
 			continue
 		}
 
@@ -187,11 +200,7 @@ func handleTree(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			title := "Failed to parse base64-encoded message"
 			log.Info().Err(err).Msg(title)
-			msg, err := createErrorResponse(ErrorResponse{Title: title})
-			if err != nil {
-				log.Panic().Err(err)
-			}
-			c.WriteJSON(msg)
+			c.WriteJSON(servermessages.CreateClientError(servermessages.ErrorResponse{Title: title}))
 			continue
 		}
 
