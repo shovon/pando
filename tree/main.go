@@ -78,7 +78,11 @@ func challengeClient(c *websocket.Conn) {
 	payload := make([]byte, 32)
 	rand.Read(payload)
 
-	message := ChallengeMessage{
+	type challengeMessage struct {
+		Message string `json:"message"`
+	}
+
+	message := challengeMessage{
 		Message: base64.RawStdEncoding.EncodeToString(payload),
 	}
 
