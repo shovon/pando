@@ -16,6 +16,13 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// We're going to have the messages be limited to 256KiB in size, which is the
+// upper limit that Chromium supposedly supports in WebRTC.
+//
+// Even though this application will never work directly with WebRTC,
+// nevertheless, the application will still be used in the context of WebRTC.
+const maxMessageSize = 1024 * 256
+
 var upgrader = websocket.Upgrader{}
 
 var trees = newTreeManager()
