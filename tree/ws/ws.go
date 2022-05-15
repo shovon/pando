@@ -38,7 +38,7 @@ func UpgradeWebSocket(upgrader websocket.Upgrader, w http.ResponseWriter, r *htt
 	return upgrader.Upgrade(w, r, nil)
 }
 
-func (w *Wrapper) Loop() {
+func (w *Wrapper) PingLoop() {
 loop:
 	for {
 		select {

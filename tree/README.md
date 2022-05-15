@@ -12,7 +12,7 @@ Properties of the server's internal representation of a tree will be the followi
 
 By the definition of the last two-points, the graph will therefore be a tree.
 
-If two non-neighbouring nodes need to communicate with eachother, either the application utilizing the spanning tree will need to design the application to support the act of relaying messages from node-to-node, or the application will need to utilize a third-party server, unrelated to the spanningtree server
+If two non-neighbouring nodes need to communicate with eachother, either the application utilizing the tree will need to design the application to support the act of relaying messages from node-to-node, or the application will need to utilize a third-party server, unrelated to the spanningtree server
 
 ## Protocol
 
