@@ -156,11 +156,11 @@ func handleTree(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create the challenge
-	challenge, err := createChallenge()
-	if err != nil {
-		log.Error().Err(err)
-		return
-	}
+	// challenge, err := ()
+	// if err != nil {
+	// 	log.Error().Err(err)
+	// 	return
+	// }
 
 	c.WriteJSON(challenge)
 
