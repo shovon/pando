@@ -6,7 +6,7 @@ import {
 	number,
 	transform,
 	validate,
-} from "../validator";
+} from "../../validator";
 
 // TODO: I suspect a lot of this code will need to be modularized even more
 
@@ -27,27 +27,35 @@ export function useAudioStreamMeter(stream: MediaStream) {
 	}, []);
 
 	useEffect(() => {
-		const audioContext = new AudioContext();
-		audioContext.audioWorklet.addModule(
-			`/event-processor.js?ts=${Date.now().toString()}`
-		);
+		let audioContext: AudioContext | undefined;
+		let workletNode: AudioWorkletNode | undefined;
 
-		const workletNode = new AudioWorkletNode(audioContext, "event-processor");
+		Promise.resolve().then(async () => {
+			audioContext = new AudioContext();
+			await audioContext.audioWorklet.addModule(
+				`/event-processor.js?ts=${Date.now().toString()}`
+			);
 
-		audioContext.createMediaStreamSource(stream);
+			workletNode = new AudioWorkletNode(audioContext, "event-processor");
 
-		workletNode.port.onmessage = ({ data }) => {
-			try {
-				callback(validate(audioStreamValidator, data));
-			} catch {
-				// TODO: maybe spit out errors here. Perhaps report back to home-base
-				//   somehow
-			}
-		};
+			const streamNode = audioContext.createMediaStreamSource(stream);
+
+			workletNode.port.onmessage = ({ data }) => {
+				try {
+					callback(validate(audioStreamValidator, data));
+				} catch {
+					// TODO: maybe spit out errors here. Perhaps report back to home-base
+					//   somehow
+				}
+			};
+
+			streamNode.connect(workletNode);
+			workletNode.connect(audioContext.destination);
+		}); // TODO: there maybe errors here. Fix them.
 
 		return () => {
-			workletNode.disconnect();
-			audioContext.close();
+			workletNode?.disconnect();
+			audioContext?.close();
 		};
 	}, [stream]);
 
