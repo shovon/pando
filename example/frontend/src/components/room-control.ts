@@ -5,6 +5,7 @@ export class RoomControl {
 	setStream(subject: string, stream: MediaStream) {
 		for (const track of stream.getTracks()) {
 			this.setTrack(subject, track);
+			this.pool.set(track, stream);
 		}
 	}
 
