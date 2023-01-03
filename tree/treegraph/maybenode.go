@@ -6,7 +6,7 @@ import (
 	"tree/set"
 )
 
-// MaybeNode represents somethig that could either be a Node or nothing.
+// MaybeNode represents something that could either be a Node or nothing.
 //
 // Rationale for creating this is to avoid null dereferencing when it is
 // possible for something to be null
