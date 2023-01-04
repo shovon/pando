@@ -49,7 +49,7 @@ func CreateMessageToParticipant(from string, message json.RawMessage) MessageWit
 type ParticipantState struct{}
 
 type RoomState struct {
-	Participants map[string]ParticipantState
+	Participants map[string]ParticipantState `json:"participants"`
 }
 
 func CreateRoomStateMessage(room RoomState) MessageWithData {
