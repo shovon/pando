@@ -39,12 +39,8 @@ Promise.resolve()
 			}
 		});
 
-		let lastTimestamp = Date.now();
 		for await (const event of toAsyncIterable(session.messageEvents)) {
 			console.log(event);
-			console.log("Time difference", Date.now() - lastTimestamp);
-			lastTimestamp = Date.now();
-			session.send(JSON.stringify({ type: "RESPONSE", data: "Haha" }));
 		}
 	})
 	.catch(console.error);

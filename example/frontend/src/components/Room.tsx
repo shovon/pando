@@ -36,9 +36,17 @@ export function Room() {
 
 	useEffect(() => {
 		Promise.resolve().then(async () => {
-			setVideo(await RoomControl.getVideo());
-			setAudio(await RoomControl.getAudio());
-			setMediaDevices(await RoomControl.getMediaDevicesList());
+			await Promise.allSettled([
+				Promise.resolve().then(async () => {
+					setVideo(await RoomControl.getVideo());
+				}),
+				Promise.resolve().then(async () => {
+					setAudio(await RoomControl.getAudio());
+				}),
+				Promise.resolve().then(async () => {
+					setMediaDevices(await RoomControl.getMediaDevicesList());
+				}),
+			]);
 		});
 	}, []);
 
