@@ -1,5 +1,9 @@
 package servermessages
 
+import (
+	"encoding/json"
+)
+
 type MessageWithData struct {
 	Type string      `json:"type"`
 	Data interface{} `json:"data"`
@@ -13,6 +17,11 @@ type ErrorResponse struct {
 	Meta   interface{} `json:"meta,omitempty"`
 }
 
+type MessageToParticipant struct {
+	From string          `json:"from"`
+	Data json.RawMessage `json:"data"`
+}
+
 func CreateClientError(err ErrorResponse) MessageWithData {
 	return MessageWithData{
 		Type: "CLIENT_ERROR",
@@ -24,5 +33,28 @@ func CreateServerError(err ErrorResponse) MessageWithData {
 	return MessageWithData{
 		Type: "SERVER_ERROR",
 		Data: err,
+	}
+}
+
+func CreateMessageToParticipant(from string, message json.RawMessage) MessageWithData {
+	return MessageWithData{
+		Type: "MESSAGE_FROM_PARTICIPANT",
+		Data: MessageToParticipant{
+			From: from,
+			Data: message,
+		},
+	}
+}
+
+type ParticipantState struct{}
+
+type RoomState struct {
+	Participants map[string]ParticipantState
+}
+
+func CreateRoomStateMessage(room RoomState) MessageWithData {
+	return MessageWithData{
+		Type: "ROOM_STATE",
+		Data: room,
 	}
 }
