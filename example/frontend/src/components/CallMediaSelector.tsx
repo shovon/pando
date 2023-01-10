@@ -3,11 +3,21 @@ import { AudioMeter } from "./AudioMeter/AudioMeter";
 import { StreamPlayer } from "./StreamPlayer";
 import { RoomControl } from "./room-control";
 
+type CallMediaSelectorProps = {
+	mediaSet: (props: {
+		video: MediaStream | null;
+		audio: MediaStream | null;
+	}) => void;
+};
+
 /**
  * Represents the room in a call
  * @returns JSX component that represents the DOM layout of the room
  */
-export function CallMediaSelector() {
+export function CallMediaSelector({ mediaSet }: CallMediaSelectorProps) {
+	// TODO: find a way to prevent resetting the video every time this modal is
+	//   invoked
+
 	// This is the video that we are previewing
 	const [video, setVideo] = useState<MediaStream | null>(null);
 
@@ -111,7 +121,13 @@ export function CallMediaSelector() {
 
 			{audio ? <AudioMeter audioStream={audio} /> : null}
 
-			<button>Accept</button>
+			<button
+				onClick={() => {
+					mediaSet({ audio, video });
+				}}
+			>
+				Accept
+			</button>
 		</div>
 	);
 }

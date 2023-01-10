@@ -1,3 +1,5 @@
 export class Room {
-	construtor() {}
+	constructor(roomId: string) {}
+
+	connect() {}
 }
