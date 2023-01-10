@@ -3,17 +3,19 @@ import { AudioMeter } from "./AudioMeter/AudioMeter";
 import { StreamPlayer } from "./StreamPlayer";
 import { RoomControl } from "./room-control";
 import { CallMediaSelector } from "./CallMediaSelector";
-import { useParams } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import { Room } from "../room";
 
-/**
- * Represents the room in a call
- * @returns JSX component that represents the DOM layout of the room
- */
-export function RoomView() {
-	let { id } = useParams();
+function InRoom({ roomId }: { roomId: string }) {
+	const roomRef = useRef<Room>(new Room(roomId));
 
-	const roomRef = useRef<Room>(new Room());
+	function connect({
+		video,
+		audio,
+	}: {
+		video: MediaStream;
+		audio: MediaStream;
+	}) {}
 
 	const [video, setVideo] = useState<MediaStream | null>(null);
 	const [audio, setAudio] = useState<MediaStream | null>(null);
@@ -27,19 +29,39 @@ export function RoomView() {
 	// to maintain synchronicity.
 	//
 	// That said, it's also important to
-	const [isSelectingVideo, setIsSelectingVideo] = useState(true);
+	const [isSelectingStreams, setIsSelectingStreams] = useState(true);
 
-	if (isSelectingVideo) {
+	if (isSelectingStreams) {
 		return (
 			<CallMediaSelector
 				mediaSet={({ audio, video }) => {
 					setAudio(audio);
 					setVideo(video);
-					setIsSelectingVideo(false);
+					setIsSelectingStreams(false);
 				}}
 			/>
 		);
 	}
 
-	return <></>;
+	return (
+		<div>
+			{video ? (
+				<StreamPlayer style={{ transform: "scaleX(-1)" }} stream={video} />
+			) : null}
+		</div>
+	);
+}
+
+/**
+ * Represents the room in a call
+ * @returns JSX component that represents the DOM layout of the room
+ */
+export function RoomView() {
+	let { id } = useParams();
+
+	if (!id) {
+		return <Navigate to="/" />;
+	}
+
+	return <InRoom roomId={id} />;
 }
