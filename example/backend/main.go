@@ -15,8 +15,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
-	"github.com/shovon/gorillawswrapper"
-	"github.com/sparkscience/wskeyid-go/v2"
+	"github.com/sparkscience/wskeyid-golang"
 )
 
 var rooms = roommanager.NewRoomManager()
@@ -54,10 +53,8 @@ func handleCall(w http.ResponseWriter, r *http.Request) {
 
 	log.Println("Got connection object")
 
-	conn := gorillawswrapper.NewWrapper(c)
-
 	{
-		err := wskeyid.HandleAuthConnection(r, conn)
+		err := wskeyid.HandleAuthConnection(r, c)
 		if err != nil {
 			log.Println("WebSocket authentication failed ", err.Error())
 			return
@@ -66,16 +63,13 @@ func handleCall(w http.ResponseWriter, r *http.Request) {
 
 	log.Println("Got connection wrapper")
 
-	defer conn.Stop()
-	defer log.Println("Closing connection")
-
 	clientId := strings.TrimSpace(r.URL.Query().Get("client_id"))
 
 	roomId, ok := params["id"]
 	if !ok {
 		// This should have technically not been possible at all. Thus closing the
 		// connection, while also notifying the client that something went wrong.
-		conn.WriteJSON(
+		c.WriteJSON(
 			servermessages.
 				CreateServerError(
 					servermessages.ErrorResponse{Title: "An internal server error"},
@@ -87,12 +81,14 @@ func handleCall(w http.ResponseWriter, r *http.Request) {
 	rooms.InsertParticipant(
 		roomId,
 		clientId,
-		callroom.Participant{Connection: conn},
+		callroom.Participant{Connection: c},
 	)
 
-	for event := range conn.MessagesChannel() {
+	messageChannel := readLoop(c)
+
+	for event := range messageChannel {
 		var message clientmessages.Message
-		err := json.Unmarshal(event.Message, &message)
+		err := json.Unmarshal(event, &message)
 		if err != nil {
 			continue
 		}
@@ -104,9 +100,13 @@ func handleCall(w http.ResponseWriter, r *http.Request) {
 				rooms.SendMessageToParticipant(roomId, clientId, toParticipant)
 			} else {
 				// TODO: send a better message to participant
-				conn.WriteJSON(servermessages.CreateClientError(servermessages.ErrorResponse{
+				b, err := json.Marshal(servermessages.CreateClientError(servermessages.ErrorResponse{
 					Title: "Bad message",
 				}))
+				if err != nil {
+					panic(err)
+				}
+				writeTextMessage(c, b)
 			}
 		}
 	}

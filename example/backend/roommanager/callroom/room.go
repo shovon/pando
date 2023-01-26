@@ -6,11 +6,11 @@ import (
 	"log"
 	"sync"
 
-	"github.com/shovon/gorillawswrapper"
+	"github.com/gorilla/websocket"
 )
 
 type Participant struct {
-	Connection gorillawswrapper.Wrapper
+	Connection *websocket.Conn
 }
 
 type Room struct {
