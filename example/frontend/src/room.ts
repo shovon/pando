@@ -6,7 +6,7 @@ export class Room {
 	private video: MediaStream | null = null;
 	private audio: MediaStream | null = null;
 
-	constructor(roomId: string) {}
+	constructor(private _roomId: string) {}
 
 	connect() {
 		Promise.resolve()
@@ -34,5 +34,9 @@ export class Room {
 				}
 			})
 			.catch(console.error);
+	}
+
+	get roomId() {
+		return this._roomId;
 	}
 }
