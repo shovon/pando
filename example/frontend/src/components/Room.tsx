@@ -34,9 +34,7 @@ function InRoom({ roomId }: { roomId: string }) {
 	if (isSelectingStreams) {
 		return (
 			<CallMediaSelector
-				mediaSet={({ audio, video }) => {
-					setAudio(audio);
-					setVideo(video);
+				onMediaSet={({ audio, video }) => {
 					setIsSelectingStreams(false);
 				}}
 			/>

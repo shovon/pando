@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { AudioMeter } from "./AudioMeter/AudioMeter";
 import { StreamPlayer } from "./StreamPlayer";
-import { RoomControl } from "./room-control";
+import { RoomControl, MediaMeta } from "./room-control";
 
 type CallMediaSelectorProps = {
-	mediaSet: (props: {
-		video: MediaStream | null;
-		audio: MediaStream | null;
+	onMediaSet: (props: {
+		video: MediaMeta | null;
+		audio: MediaMeta | null;
 	}) => void;
 };
 
@@ -14,15 +14,23 @@ type CallMediaSelectorProps = {
  * Represents the room in a call
  * @returns JSX component that represents the DOM layout of the room
  */
-export function CallMediaSelector({ mediaSet }: CallMediaSelectorProps) {
+export function CallMediaSelector({
+	onMediaSet: mediaSet,
+}: CallMediaSelectorProps) {
 	// TODO: find a way to prevent resetting the video every time this modal is
 	//   invoked
 
 	// This is the video that we are previewing
-	const [video, setVideo] = useState<MediaStream | null>(null);
+	const [video, setVideo] = useState<MediaMeta | null>({
+		media: null,
+		deviceId: null,
+	});
 
 	// This is the audio that we are previewing
-	const [audio, setAudio] = useState<MediaStream | null>(null);
+	const [audio, setAudio] = useState<MediaMeta | null>({
+		media: null,
+		deviceId: null,
+	});
 
 	// The list of media devices (both audio and video) that we want to select
 	// from
@@ -47,11 +55,11 @@ export function CallMediaSelector({ mediaSet }: CallMediaSelectorProps) {
 	}
 
 	function getCurrentlySelectedVideoId() {
-		return video?.getTracks()[0].getSettings().deviceId ?? "";
+		return video?.media?.getTracks()[0].getSettings().deviceId ?? "";
 	}
 
 	function getCurrentlySelectedAudioId() {
-		return audio?.getTracks()[0].getSettings().deviceId ?? "";
+		return audio?.media?.getTracks()[0].getSettings().deviceId ?? "";
 	}
 
 	useEffect(() => {
@@ -95,8 +103,11 @@ export function CallMediaSelector({ mediaSet }: CallMediaSelectorProps) {
 				</div>
 			) : null}
 
-			{video ? (
-				<StreamPlayer style={{ transform: "scaleX(-1)" }} stream={video} />
+			{video?.media ? (
+				<StreamPlayer
+					style={{ transform: "scaleX(-1)" }}
+					stream={video.media}
+				/>
 			) : null}
 
 			{audioDevices ? (
@@ -119,7 +130,7 @@ export function CallMediaSelector({ mediaSet }: CallMediaSelectorProps) {
 				</div>
 			) : null}
 
-			{audio ? <AudioMeter audioStream={audio} /> : null}
+			{audio?.media ? <AudioMeter audioStream={audio.media} /> : null}
 
 			<button
 				onClick={() => {

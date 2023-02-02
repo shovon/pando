@@ -1,10 +1,65 @@
 import { generateKeys } from "@sparkscience/wskeyid-browser/src/utils";
 import { Session } from "./session";
 import { toAsyncIterable } from "@sparkscience/wskeyid-browser/src/pub-sub";
+import { InferType } from "./validator";
+import { RemoteParticipant } from "./components/remote-participant";
+
+class Participant {
+	private _videoStream: MediaStream | null = null;
+	private _audioStream: MediaStream | null = null;
+	private _screenshareStream: MediaStream | null = null;
+	private _remoteParticipant: RemoteParticipant;
+
+	constructor(remoteParticipant: RemoteParticipant, private session: Session) {
+		this._remoteParticipant = remoteParticipant;
+	}
+
+	connect() {
+		this.session.messageEvents.addEventListener((message) => {});
+	}
+
+	disconnect() {}
+
+	sendMessage() {}
+
+	setRemoteParticipant(p: RemoteParticipant) {
+		this._remoteParticipant = p;
+	}
+
+	get videoStream(): MediaStream | null {
+		return this._videoStream;
+	}
+
+	get audioStream(): MediaStream | null {
+		return this._audioStream;
+	}
+
+	get screenshareStream(): MediaStream | null {
+		return this._screenshareStream;
+	}
+}
+
+class ParticipantsManager {
+	private _participants: Map<string, Participant> = new Map();
+
+	setRoomState() {}
+}
 
 export class Room {
-	private video: MediaStream | null = null;
-	private audio: MediaStream | null = null;
+	private _primaryVideo: MediaStream | null = null;
+	private _screenshareVideo: MediaStream | null = null;
+	private _audio: MediaStream | null = null;
+	private _participants: ReadOnlyMap<
+		string,
+		{
+			participant: RemoteParticipant;
+			media: {
+				audio: MediaStream;
+				video: MediaStream;
+				screenshare: MediaStream;
+			};
+		}
+	> = new Map();
 
 	constructor(private _roomId: string) {}
 
@@ -12,10 +67,7 @@ export class Room {
 		Promise.resolve()
 			.then(async function () {
 				const keys = await generateKeys();
-				const session = await new Session(
-					"ws://localhost:8080/room/some_room",
-					keys
-				);
+				const session = new Session("ws://localhost:8080/room/some_room", keys);
 
 				session.sessionStatusChangeEvents.addEventListener((status) => {
 					if (status.type === "CONNECTING") {
@@ -29,11 +81,45 @@ export class Room {
 					}
 				});
 
-				for await (const event of toAsyncIterable(session.messageEvents)) {
-					console.log(event);
+				for await (const { data: buffer } of toAsyncIterable(
+					session.messageEvents
+				)) {
+					try {
+						const { type, data } = JSON.parse(buffer);
+						switch (type) {
+							case "ROOM_STATE":
+								console.log("Got room state", data);
+						}
+					} catch (e) {
+						console.error(e);
+					}
 				}
 			})
 			.catch(console.error);
+	}
+
+	get video(): MediaStream | null {
+		return this._primaryVideo;
+	}
+
+	set video(value: MediaStream | null) {
+		this._primaryVideo = value;
+	}
+
+	get audio(): MediaStream | null {
+		return this._audio;
+	}
+
+	set audio(value: MediaStream | null) {
+		this._audio = value;
+	}
+
+	get screenshareVideo(): MediaStream | null {
+		return this._screenshareVideo;
+	}
+
+	set screenshareVideo(value: MediaStream | null) {
+		this._screenshareVideo = value;
 	}
 
 	get roomId() {
