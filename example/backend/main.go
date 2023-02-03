@@ -18,6 +18,8 @@ import (
 	"github.com/sparkscience/wskeyid-golang"
 )
 
+const defaultPort = 8080
+
 var rooms = roommanager.NewRoomManager()
 
 var upgrader = websocket.Upgrader{
@@ -27,18 +29,18 @@ var upgrader = websocket.Upgrader{
 func getPort() int {
 	port := strings.Trim(os.Getenv("PORT"), " ")
 	if port == "" {
-		return 8080
+		return defaultPort
 	}
 
 	num, err := strconv.Atoi(port)
 	if err != nil {
-		return 8080
+		return defaultPort
 	}
 
 	return num
 }
 
-func handleCall(w http.ResponseWriter, r *http.Request) {
+func handleRoom(w http.ResponseWriter, r *http.Request) {
 
 	log.Print("Got connection from client")
 
@@ -84,6 +86,8 @@ func handleCall(w http.ResponseWriter, r *http.Request) {
 		callroom.Participant{Connection: c},
 	)
 
+	defer rooms.RemoveParticipant(roomId, clientId)
+
 	messageChannel := readLoop(c)
 
 	for event := range messageChannel {
@@ -115,9 +119,9 @@ func handleCall(w http.ResponseWriter, r *http.Request) {
 func main() {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/room/{id}", handleCall)
+	r.HandleFunc("/room/{id}", handleRoom)
 
 	port := getPort()
 	log.Printf("Listening on port %d", port)
-	panic(http.ListenAndServe(fmt.Sprintf(":%d", port), r))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), r))
 }
