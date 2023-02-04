@@ -1,29 +1,39 @@
 import { generateKeys } from "@sparkscience/wskeyid-browser/src/utils";
 import { Session } from "./session";
-import { toAsyncIterable } from "@sparkscience/wskeyid-browser/src/pub-sub";
+import {
+	Sub,
+	toAsyncIterable,
+} from "@sparkscience/wskeyid-browser/src/pub-sub";
 import { InferType } from "./validator";
 import { RemoteParticipant } from "./components/remote-participant";
+import { Disposable, dispose } from "./disposable";
 
 class Participant {
 	private _videoStream: MediaStream | null = null;
 	private _audioStream: MediaStream | null = null;
 	private _screenshareStream: MediaStream | null = null;
 	private _remoteParticipant: RemoteParticipant;
+	private unsubscribeFromMessages: () => void;
 
-	constructor(remoteParticipant: RemoteParticipant, private session: Session) {
+	constructor(
+		remoteParticipant: RemoteParticipant,
+		messageEvents: Sub<MessageEvent<any>>
+	) {
 		this._remoteParticipant = remoteParticipant;
-	}
 
-	connect() {
-		this.session.messageEvents.addEventListener((message) => {});
+		this.unsubscribeFromMessages = messageEvents.addEventListener(
+			(message) => {}
+		);
 	}
-
-	disconnect() {}
 
 	sendMessage() {}
 
 	setRemoteParticipant(p: RemoteParticipant) {
 		this._remoteParticipant = p;
+	}
+
+	dispose() {
+		this.unsubscribeFromMessages();
 	}
 
 	get videoStream(): MediaStream | null {
@@ -97,6 +107,8 @@ export class Room {
 			})
 			.catch(console.error);
 	}
+
+	dispose() {}
 
 	get video(): MediaStream | null {
 		return this._primaryVideo;
