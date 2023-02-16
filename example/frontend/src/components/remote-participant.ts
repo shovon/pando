@@ -10,6 +10,7 @@ import {
 	boolean,
 	ValidationError,
 	InferType,
+	any,
 } from "../validator";
 
 class NotIterableError extends ValidationError {
@@ -67,6 +68,7 @@ const nullable = <T>(validator: Validator<T>) => either(validator, exact(null));
 
 const mediaObject = object({
 	disabled: boolean(),
+	sources: iterableToReadOnlyMap(string(), any()),
 });
 
 export const remoteParticipant = readOnly(

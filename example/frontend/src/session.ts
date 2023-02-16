@@ -24,6 +24,7 @@ export class Session {
 	private readonly _sessionStatusChangeEvents: PubSub<SessionStatus> =
 		new PubSub();
 	private messagesBuffer: string[] = [];
+	private _isSessionEnded: boolean = false;
 
 	private backoffExponent = 0;
 	private sleeping = false;
@@ -111,12 +112,19 @@ export class Session {
 			}
 			this.setSessionStatus(status);
 			if (status.type === "CLOSED") {
-				this.restart(null);
+				if (!this._isSessionEnded) {
+					this.restart(null);
+				}
 			}
 		});
 		this.connection.messageEvents.addEventListener((message) => {
 			this._messageEvents.emit(message);
 		});
+	}
+
+	endSession() {
+		this.connection?.close();
+		this._isSessionEnded = true;
 	}
 
 	send(message: string) {
@@ -141,5 +149,9 @@ export class Session {
 
 	get sessionStatusChangeEvents(): Sub<SessionStatus> {
 		return this._sessionStatusChangeEvents;
+	}
+
+	get isClosed() {
+		return this._isSessionEnded;
 	}
 }

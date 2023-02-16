@@ -4,7 +4,7 @@ import { StreamPlayer } from "./StreamPlayer";
 import { RoomControl } from "./room-control";
 import { CallMediaSelector } from "./CallMediaSelector";
 import { Navigate, useParams } from "react-router-dom";
-import { Room } from "../room";
+import { Room } from "../room/room";
 
 function InRoom({ roomId }: { roomId: string }) {
 	const roomRef = useRef<Room>(new Room(roomId));
