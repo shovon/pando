@@ -5,6 +5,7 @@ import (
 	"backend/messages/servermessages"
 	"backend/roommanager"
 	"backend/roommanager/callroom"
+	"backend/ws"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -26,6 +27,9 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
 }
 
+// Gets the appropriate port to get the server running on.
+// If the PORT environment variable is set, then it will use that. Otherwise, it
+// will use the default port
 func getPort() int {
 	port := strings.Trim(os.Getenv("PORT"), " ")
 	if port == "" {
@@ -40,12 +44,18 @@ func getPort() int {
 	return num
 }
 
+// handleRoom is the event handler for the room endpoint.
+//
+// This is where when there is a connection to a room, the participant will
+// interact with the room
 func handleRoom(w http.ResponseWriter, r *http.Request) {
 
 	log.Print("Got connection from client")
 
+	// Grab the list of parameters
 	params := mux.Vars(r)
 
+	// HTTP -> WebSocket
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Print(err.Error())
@@ -55,6 +65,7 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 
 	log.Println("Got connection object")
 
+	// Authenticate
 	{
 		err := wskeyid.HandleAuthConnection(r, c)
 		if err != nil {
@@ -65,8 +76,10 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 
 	log.Println("Got connection wrapper")
 
+	// Get the client ID from the URL
 	clientId := strings.TrimSpace(r.URL.Query().Get("client_id"))
 
+	// Get the room ID from the URL
 	roomId, ok := params["id"]
 	if !ok {
 		// This should have technically not been possible at all. Thus closing the
@@ -80,15 +93,23 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Insert the participant into the room
 	rooms.InsertParticipant(
 		roomId,
 		clientId,
-		callroom.Participant{Connection: c},
+		callroom.Client{Connection: c},
 	)
 
 	defer rooms.RemoveParticipant(roomId, clientId)
 
-	messageChannel := readLoop(c)
+	// Creates a message channel, to read from
+	messageChannel := ws.ReadLoop(c)
+
+	// Just something to ensure that there are not thread safety issues.
+	//
+	// TODO: ensure there is absolutely no way to do anything that is
+	//   thread-unsafe
+	writer := ws.NewThreadSafeWriter(c)
 
 	for event := range messageChannel {
 		var message clientmessages.Message
@@ -110,7 +131,7 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 				if err != nil {
 					panic(err)
 				}
-				writeTextMessage(c, b)
+				writer.Write(b)
 			}
 		}
 	}

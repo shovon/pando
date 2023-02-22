@@ -1,4 +1,4 @@
-package main
+package ws
 
 import (
 	"time"
@@ -6,21 +6,12 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-const (
-	writeWait  = 60 * time.Second
-	pongWait   = 60 * time.Second
-	pingPeriod = (pongWait * 9) / 10
-)
-
-func wrapper() {
-
-}
-
 func setWriteDeadline(c *websocket.Conn) error {
 	return c.SetWriteDeadline(time.Now().Add(writeWait))
 }
 
-func readLoop(c *websocket.Conn) <-chan []byte {
+// ReadLoop gets a channel that will receive messages from the websocket
+func ReadLoop(c *websocket.Conn) <-chan []byte {
 	ch := make(chan []byte)
 
 	go func() {
@@ -58,6 +49,7 @@ func readLoop(c *websocket.Conn) <-chan []byte {
 }
 
 func writeTextMessage(c *websocket.Conn, m []byte) error {
+
 	err := setWriteDeadline(c)
 	if err != nil {
 		return err

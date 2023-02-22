@@ -15,7 +15,10 @@ func NewRoomManager() RoomManager {
 	return RoomManager{lock: &sync.RWMutex{}, rooms: make(map[string]callroom.Room)}
 }
 
-func (r *RoomManager) SendMessageToParticipant(roomId, fromParticipantId string, message clientmessages.MessageToParticipant) {
+func (r *RoomManager) SendMessageToParticipant(
+	roomId, fromParticipantId string,
+	message clientmessages.MessageToParticipant,
+) {
 	r.lock.RLock()
 	defer r.lock.RUnlock()
 	room, ok := r.rooms[roomId]
@@ -23,20 +26,22 @@ func (r *RoomManager) SendMessageToParticipant(roomId, fromParticipantId string,
 		return
 	}
 
-	room.SendMessageToParticipant(message, fromParticipantId)
+	room.SendMessageToClient(message, fromParticipantId)
 }
 
+// InsertParticipant inserts a new participant into the room
 func (r *RoomManager) InsertParticipant(
 	roomId, participantId string,
-	participant callroom.Participant,
+	participant callroom.Client,
 ) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
 	room := r.getRoom(roomId)
-	room.InsertParticipant(participantId, participant)
+	room.InsertClient(participantId, participant)
 }
 
+// RemoveParticipant removes a participant from the room
 func (r *RoomManager) RemoveParticipant(roomId, participantId string) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
@@ -46,7 +51,7 @@ func (r *RoomManager) RemoveParticipant(roomId, participantId string) {
 		return
 	}
 
-	room.RemoveParticipant(participantId)
+	room.RemoveClient(participantId)
 
 	if room.Size() < 0 {
 		delete(r.rooms, roomId)
