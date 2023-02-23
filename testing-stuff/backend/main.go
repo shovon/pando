@@ -120,6 +120,8 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 
 		switch message.Type {
 		case "MESSAGE_TO_PARTICIPANT":
+			// Recieved a message from participant, inteded for another participant
+
 			toParticipant, err := clientmessages.ParseMessageToParticipant(message.Data)
 			if err == nil {
 				rooms.SendMessageToParticipant(roomId, clientId, toParticipant)
@@ -128,12 +130,71 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 				b, err := json.Marshal(servermessages.CreateClientError(servermessages.ErrorResponse{
 					Title: "Bad message",
 				}))
+				// TODO: handle the event when an error occurred attempting to marshal
+				//   JSON
 				if err != nil {
-					panic(err)
+					log.Println("Was not able to marshal error message to be sent to client")
+					return
 				}
 				writer.Write(b)
 			}
+		case "BROADCAST_MESSAGE":
+			b, err := json.Marshal(servermessages.CreateServerError(servermessages.ErrorResponse{
+				Title: "Not yet implemented",
+			}))
+			// TODO: handle the event when an error occurred attempting to marshal
+			//   JSON
+			if err != nil {
+				log.Println("Was not able to marshal error message to be sent to client")
+				return
+			}
+			writer.Write(b)
+		case "ENABLE_VIDEO":
+			b, err := json.Marshal(servermessages.CreateServerError(servermessages.ErrorResponse{
+				Title: "Not yet implemented",
+			}))
+			// TODO: handle the event when an error occurred attempting to marshal
+			//   JSON
+			if err != nil {
+				log.Println("Was not able to marshal error message to be sent to client")
+				return
+			}
+			writer.Write(b)
+		case "DISABLE_VIDEO":
+			b, err := json.Marshal(servermessages.CreateServerError(servermessages.ErrorResponse{
+				Title: "Not yet implemented",
+			}))
+			// TODO: handle the event when an error occurred attempting to marshal
+			//   JSON
+			if err != nil {
+				log.Println("Was not able to marshal error message to be sent to client")
+				return
+			}
+			writer.Write(b)
+		case "ENABLE_AUDIO":
+			b, err := json.Marshal(servermessages.CreateServerError(servermessages.ErrorResponse{
+				Title: "Not yet implemented",
+			}))
+			// TODO: handle the event when an error occurred attempting to marshal
+			//   JSON
+			if err != nil {
+				log.Println("Was not able to marshal error message to be sent to client")
+				return
+			}
+			writer.Write(b)
+		case "DISABLE_AUDIO":
+			b, err := json.Marshal(servermessages.CreateServerError(servermessages.ErrorResponse{
+				Title: "Not yet implemented",
+			}))
+			// TODO: handle the event when an error occurred attempting to marshal
+			//   JSON
+			if err != nil {
+				log.Println("Was not able to marshal error message to be sent to client")
+				return
+			}
+			writer.Write(b)
 		}
+
 	}
 }
 

@@ -69,22 +69,29 @@ func (r *Room) RemoveClient(participantId string) {
 	r.signalRoomState()
 }
 
-// SendMessageToClient sends a message to the client
+// SendMessageToClient is intended to handle the event when a participant
+// intends to send a direct message to another participant.
+//
+// A boolean is returned to indicate whether the message was sent successfully
 func (r Room) SendMessageToClient(
 	message clientmessages.MessageToParticipant,
 	fromParticipantId string,
-) {
+) (bool, error) {
 	r.lock.RLock()
 	defer r.lock.RUnlock()
 
 	participant, ok := r.clients[message.To]
 	if !ok {
-		return
+		return false, nil
 	}
 
-	participant.Connection.WriteJSON(
+	err := participant.Connection.WriteJSON(
 		servermessages.CreateMessageToParticipant(fromParticipantId, message.Data),
 	)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // Size returns the number of clients in the room
