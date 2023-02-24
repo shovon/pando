@@ -114,6 +114,7 @@ export class Session {
 			if (status.type === "CLOSED") {
 				if (!this._isSessionEnded) {
 					this.restart(null);
+				} else {
 				}
 			}
 		});

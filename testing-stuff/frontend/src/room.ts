@@ -5,6 +5,7 @@ import { ROOM_WEBSOCKET_SERVER_ORIGIN } from "./constants";
 
 export class Room {
 	private session: Session | null = null;
+	private cancel: boolean = false;
 
 	constructor(private _roomId: string, private _name: string) {
 		this.connect();
@@ -14,7 +15,10 @@ export class Room {
 		Promise.resolve()
 			.then(async () => {
 				const keys = await generateKeys();
-				console.log(ROOM_WEBSOCKET_SERVER_ORIGIN);
+
+				if (this.cancel) {
+					return;
+				}
 				this.session = new Session(
 					`${ROOM_WEBSOCKET_SERVER_ORIGIN}/room/some_room`,
 					keys
@@ -56,6 +60,7 @@ export class Room {
 	}
 
 	dispose() {
+		this.cancel = true;
 		this.session?.endSession();
 	}
 
