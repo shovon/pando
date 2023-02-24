@@ -4,7 +4,6 @@ import (
 	"backend/messages/clientmessages"
 	"backend/messages/servermessages"
 	"backend/roommanager"
-	"backend/roommanager/callroom"
 	"backend/ws"
 	"encoding/json"
 	"fmt"
@@ -98,6 +97,8 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 
 	log.Println("Waiting for name")
 
+	var name string
+
 	for event := range messageChannel {
 		var message clientmessages.Message
 		err := json.Unmarshal(event, &message)
@@ -107,7 +108,8 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 
 		if message.Type == "SET_NAME" {
 			// Got the participant name
-			_, err := clientmessages.ParseParticipantName(message.Data)
+			n, err := clientmessages.ParseParticipantName(message.Data)
+			name = n
 			if err != nil {
 				log.Println("Error parsing participant name: ", err.Error())
 			}
@@ -119,7 +121,10 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 	rooms.InsertParticipant(
 		roomId,
 		clientId,
-		callroom.Client{Connection: c},
+		struct {
+			Connection *websocket.Conn
+			Name       string
+		}{Connection: c, Name: name},
 	)
 
 	defer rooms.RemoveParticipant(roomId, clientId)

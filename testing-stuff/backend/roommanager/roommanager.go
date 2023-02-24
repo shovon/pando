@@ -2,8 +2,11 @@ package roommanager
 
 import (
 	"backend/messages/clientmessages"
+	"backend/messages/servermessages"
 	"backend/roommanager/callroom"
 	"sync"
+
+	"github.com/gorilla/websocket"
 )
 
 type RoomManager struct {
@@ -39,13 +42,22 @@ func (r *RoomManager) SendMessageToParticipant(
 // InsertParticipant inserts a new participant into the room
 func (r *RoomManager) InsertParticipant(
 	roomId, participantId string,
-	participant callroom.Client,
+	participant struct {
+		Connection *websocket.Conn
+		Name       string
+	},
 ) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
 	room := r.getRoom(roomId)
-	room.InsertClient(participantId, participant)
+	room.InsertClient(
+		participantId,
+		callroom.Client{
+			Connection: participant.Connection,
+			Participant: servermessages.ParticipantState{Name: participant.Name}
+		}
+	)
 }
 
 // RemoveParticipant removes a participant from the room
