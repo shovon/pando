@@ -2,15 +2,8 @@ package ws
 
 import (
 	"sync"
-	"time"
 
 	"github.com/gorilla/websocket"
-)
-
-const (
-	writeWait  = 60 * time.Second
-	pongWait   = 60 * time.Second
-	pingPeriod = (pongWait * 9) / 10
 )
 
 // ThreadSafeWriter is a wrapper around a websocket connection

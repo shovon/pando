@@ -93,6 +93,25 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Wait until the participant provides a name
+	messageChannel := ws.ReadLoop(c)
+
+	for event := range messageChannel {
+		var message clientmessages.Message
+		err := json.Unmarshal(event, &message)
+		if err != nil {
+			continue
+		}
+
+		if message.Type == "SET_NAME" {
+			// Got the participant name
+			_, err := clientmessages.ParseParticipantName(message.Data)
+			if err != nil {
+				log.Println("Error parsing participant name: ", err.Error())
+			}
+		}
+	}
+
 	// Insert the participant into the room
 	rooms.InsertParticipant(
 		roomId,
@@ -103,7 +122,6 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 	defer rooms.RemoveParticipant(roomId, clientId)
 
 	// Creates a message channel, to read from
-	messageChannel := ws.ReadLoop(c)
 
 	// Just something to ensure that there are not thread safety issues.
 	//
@@ -135,8 +153,9 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 				if err != nil {
 					log.Println("Was not able to marshal error message to be sent to client")
 					return
+				} else {
+					writer.Write(b)
 				}
-				writer.Write(b)
 			}
 		case "BROADCAST_MESSAGE":
 			b, err := json.Marshal(servermessages.CreateServerError(servermessages.ErrorResponse{
@@ -147,8 +166,9 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				log.Println("Was not able to marshal error message to be sent to client")
 				return
+			} else {
+				writer.Write(b)
 			}
-			writer.Write(b)
 		case "ENABLE_VIDEO":
 			b, err := json.Marshal(servermessages.CreateServerError(servermessages.ErrorResponse{
 				Title: "Not yet implemented",
@@ -158,8 +178,9 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				log.Println("Was not able to marshal error message to be sent to client")
 				return
+			} else {
+				writer.Write(b)
 			}
-			writer.Write(b)
 		case "DISABLE_VIDEO":
 			b, err := json.Marshal(servermessages.CreateServerError(servermessages.ErrorResponse{
 				Title: "Not yet implemented",
@@ -169,8 +190,9 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				log.Println("Was not able to marshal error message to be sent to client")
 				return
+			} else {
+				writer.Write(b)
 			}
-			writer.Write(b)
 		case "ENABLE_AUDIO":
 			b, err := json.Marshal(servermessages.CreateServerError(servermessages.ErrorResponse{
 				Title: "Not yet implemented",
@@ -180,8 +202,9 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				log.Println("Was not able to marshal error message to be sent to client")
 				return
+			} else {
+				writer.Write(b)
 			}
-			writer.Write(b)
 		case "DISABLE_AUDIO":
 			b, err := json.Marshal(servermessages.CreateServerError(servermessages.ErrorResponse{
 				Title: "Not yet implemented",
@@ -191,8 +214,9 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				log.Println("Was not able to marshal error message to be sent to client")
 				return
+			} else {
+				writer.Write(b)
 			}
-			writer.Write(b)
 		}
 
 	}

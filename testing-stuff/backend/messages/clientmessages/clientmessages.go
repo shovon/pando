@@ -17,3 +17,9 @@ func ParseMessageToParticipant(message json.RawMessage) (MessageToParticipant, e
 	err := json.Unmarshal(message, &m)
 	return m, err
 }
+
+func ParseParticipantName(message json.RawMessage) (string, error) {
+	var name string
+	err := json.Unmarshal(message, &name)
+	return name, err
+}
