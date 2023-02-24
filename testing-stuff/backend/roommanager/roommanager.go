@@ -54,9 +54,9 @@ func (r *RoomManager) InsertParticipant(
 	room.InsertClient(
 		participantId,
 		callroom.Client{
-			Connection: participant.Connection,
-			Participant: servermessages.ParticipantState{Name: participant.Name}
-		}
+			Connection:  participant.Connection,
+			Participant: servermessages.ParticipantState{Name: participant.Name},
+		},
 	)
 }
 
