@@ -26,7 +26,7 @@ export class Room {
 		Promise.resolve()
 			.then(async () => {
 				const keys = await generateKeys();
-				this.session = new Session("ws://localhost:8080/room/some_room", keys);
+				this.session = new Session(`ws://localhost:8080/room/some_room`, keys);
 
 				this.session.sessionStatusChangeEvents.addEventListener((status) => {
 					if (status.type === "CONNECTING") {

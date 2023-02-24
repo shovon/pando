@@ -20,24 +20,26 @@ export class Room {
 					keys
 				);
 
-				this.session.sessionStatusChangeEvents.addEventListener((status) => {
+				let session = this.session;
+
+				session.sessionStatusChangeEvents.addEventListener((status) => {
 					if (status.type === "CONNECTING") {
 						console.log(
 							"status type is %s and sub status is %s",
 							status.type,
 							status.status
 						);
+					} else if (status.type === "CONNECTED") {
+						session.send(
+							JSON.stringify({ type: "SET_NAME", data: this._name })
+						);
 					} else {
 						console.log("Status type is %s", status.type);
 					}
 				});
 
-				this.session.send(
-					JSON.stringify({ type: "SET_NAME", data: this._name })
-				);
-
 				for await (const { data: buffer } of toAsyncIterable(
-					this.session.messageEvents
+					session.messageEvents
 				)) {
 					try {
 						const { type, data } = JSON.parse(buffer);
