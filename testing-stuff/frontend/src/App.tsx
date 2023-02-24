@@ -1,6 +1,9 @@
 import { useState } from "react";
 import reactLogo from "./assets/react.svg";
 import "./App.css";
+import { Room } from "./room";
+
+const room = new Room("room1", "Sweet");
 
 function App() {
 	const [count, setCount] = useState(0);

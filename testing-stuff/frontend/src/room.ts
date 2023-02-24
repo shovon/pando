@@ -1,6 +1,7 @@
 import { generateKeys } from "@sparkscience/wskeyid-browser/src/utils";
 import { Session } from "./session";
 import { toAsyncIterable } from "@sparkscience/wskeyid-browser/src/pub-sub";
+import { ROOM_WEBSOCKET_SERVER_ORIGIN } from "./constants";
 
 export class Room {
 	private session: Session | null = null;
@@ -13,7 +14,11 @@ export class Room {
 		Promise.resolve()
 			.then(async () => {
 				const keys = await generateKeys();
-				this.session = new Session("ws://localhost:8080/room/some_room", keys);
+				console.log(ROOM_WEBSOCKET_SERVER_ORIGIN);
+				this.session = new Session(
+					`${ROOM_WEBSOCKET_SERVER_ORIGIN}/room/some_room`,
+					keys
+				);
 
 				this.session.sessionStatusChangeEvents.addEventListener((status) => {
 					if (status.type === "CONNECTING") {
@@ -26,6 +31,10 @@ export class Room {
 						console.log("Status type is %s", status.type);
 					}
 				});
+
+				this.session.send(
+					JSON.stringify({ type: "SET_NAME", data: this._name })
+				);
 
 				for await (const { data: buffer } of toAsyncIterable(
 					this.session.messageEvents
