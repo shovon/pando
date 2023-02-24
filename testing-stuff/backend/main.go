@@ -19,7 +19,7 @@ import (
 	"github.com/sparkscience/wskeyid-golang"
 )
 
-const defaultPort = 8080
+const defaultPort = 3333
 
 var rooms = roommanager.NewRoomManager()
 
@@ -96,6 +96,8 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 	// Wait until the participant provides a name
 	messageChannel := ws.ReadLoop(c)
 
+	log.Println("Waiting for name")
+
 	for event := range messageChannel {
 		var message clientmessages.Message
 		err := json.Unmarshal(event, &message)
@@ -109,6 +111,7 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				log.Println("Error parsing participant name: ", err.Error())
 			}
+			break
 		}
 	}
 
@@ -129,7 +132,11 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 	//   thread-unsafe
 	writer := ws.NewThreadSafeWriter(c)
 
-	for event := range messageChannel {
+	for {
+		event, ok := <-messageChannel
+		if !ok {
+			break
+		}
 		var message clientmessages.Message
 		err := json.Unmarshal(event, &message)
 		if err != nil {
@@ -220,6 +227,8 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 		}
 
 	}
+
+	fmt.Println("Connection ended")
 }
 
 func main() {

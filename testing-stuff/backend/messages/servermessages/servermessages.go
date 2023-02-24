@@ -54,13 +54,13 @@ func CreateMessageToParticipant(from string, message json.RawMessage) MessageWit
 // ParticipantState is the state of a participant
 type ParticipantState struct {
 	// Name is the name of the participant
-	Name string
+	Name string `json:"name"`
 
 	// HasVideo is true if the participant has video enabled
-	HasVideo bool
+	HasVideo bool `json:"hasVideo"`
 
 	// HasAudio is true if the participant has audio enabled
-	HasAudio bool
+	HasAudio bool `json:"hasAudio"`
 }
 
 // ROomState is the state of a room

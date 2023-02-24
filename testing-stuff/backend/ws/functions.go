@@ -20,6 +20,7 @@ func ReadLoop(c *websocket.Conn) <-chan []byte {
 			c.SetReadDeadline(time.Now().Add(pongWait))
 
 			if err != nil {
+				close(ch)
 				return
 			}
 			if t == websocket.TextMessage || t == websocket.BinaryMessage {
@@ -40,6 +41,7 @@ func ReadLoop(c *websocket.Conn) <-chan []byte {
 			setWriteDeadline(c)
 			err := c.WriteMessage(websocket.PingMessage, nil)
 			if err != nil {
+				close(ch)
 				return
 			}
 		}
