@@ -43,7 +43,11 @@ function WithRoom({ room }: { room: Room }) {
 		};
 	});
 	return (
-		<div>{it.map(participants, ([k, participant]) => participant.name)}</div>
+		<ul>
+			{it.map(participants, ([k, participant]) => (
+				<li key={k}>{participant.name}</li>
+			))}
+		</ul>
 	);
 }
 
