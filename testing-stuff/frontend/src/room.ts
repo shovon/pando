@@ -62,8 +62,12 @@ export class Participant {
 	dispose() {}
 }
 
-// TODO: Room#session could potentially be set to null. Refactor this code
+// TODO: Room#session could potentially be set to null. Refactor this code.
+//   Perhaps use dependency injection to inject the session into the room
 
+/**
+ *
+ */
 export class Room {
 	private session: Session | null = null;
 	private cancel: boolean = false;

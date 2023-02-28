@@ -17,6 +17,15 @@ type SessionStatus =
 			restartReason: { type: "CLOSED" } | { type: "ERROR"; data: any };
 	  };
 
+// An arbitrary amount of time in milliseconds to wait before considering that
+// the connection is steady after a restart
+export const restartTimeout = 10000;
+
+/**
+ * A wrapper object around AuthenticatedConnection. Not only this class performs
+ * the wskey-id handshake, but unlike AuthenticatedConnection, if the underlying
+ * WebSocket connection is severed, a reconnection attempt will occur.
+ */
 export class Session {
 	private connection: AuthenticatedConnection | null = null;
 	private readonly _messageEvents: PubSub<MessageEvent> = new PubSub();
@@ -29,7 +38,17 @@ export class Session {
 	private backoffExponent = 0;
 	private sleeping = false;
 
+	private _recentlyRestartedStartTimeAndTimeout: {
+		startTime: Date;
+		timeout: number;
+	} | null = null;
+
 	private async restart(error: { data: any } | null) {
+		if (this._recentlyRestartedStartTimeAndTimeout) {
+			clearTimeout(this._recentlyRestartedStartTimeAndTimeout.timeout);
+			this._recentlyRestartedStartTimeAndTimeout = null;
+		}
+
 		if (this.sleeping) {
 			return;
 		}
@@ -80,6 +99,11 @@ export class Session {
 		});
 	}
 
+	/**
+	 * Initalizes a new Session object, and also ocnnects to the WebSocket server
+	 * @param url The URL to connect to the WebSocket server
+	 * @param key The keys to use for the wskey-id handshake
+	 */
 	constructor(
 		private readonly url: string,
 		private readonly key: CryptoKeyPair
@@ -123,11 +147,19 @@ export class Session {
 		});
 	}
 
+	/**
+	 * Closes the connection to the WebSocket server, and stops any reconnection
+	 */
 	endSession() {
 		this.connection?.close();
 		this._isSessionEnded = true;
 	}
 
+	/**
+	 * Sends a message to the WebSocket server
+	 * @param message The message to send to the WebSocket server. Does not need
+	 *   to be a JSON string.
+	 */
 	send(message: string) {
 		if (this.connection) {
 			this.connection.send(message);
@@ -136,22 +168,41 @@ export class Session {
 		}
 	}
 
+	/**
+	 * From the message events, gets the next message event from the WebSocket
+	 * @returns The next message event from the WebSocket server
+	 */
 	getNextMessage() {
 		return getNext(this._messageEvents);
 	}
 
+	/**
+	 * Gets the message event emitter, containing an event stream of messages from
+	 * the WebSocket server
+	 */
 	get messageEvents(): Sub<MessageEvent> {
 		return this._messageEvents;
 	}
 
+	/**
+	 * Gets the current status of the connection to the WebSocket server
+	 */
 	get sessionStatus(): SessionStatus {
 		return this._sessionStatus;
 	}
 
+	/**
+	 * Gets the session status change event emitter, containing an event stream of
+	 * changes to the connection status
+	 */
 	get sessionStatusChangeEvents(): Sub<SessionStatus> {
 		return this._sessionStatusChangeEvents;
 	}
 
+	/**
+	 * Gets whether the session has ended. If this is true, the session will not
+	 * attempt to reconnect to the WebSocket server
+	 */
 	get isClosed() {
 		return this._isSessionEnded;
 	}
