@@ -1,6 +1,9 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 import { Room } from "../room";
 import * as it from "../iterables";
+import { generateKeys } from "@sparkscience/wskeyid-browser/src/utils";
+import { Session } from "../session";
+import { ROOM_WEBSOCKET_SERVER_ORIGIN } from "../constants";
 
 // This is the actual room view where all the jazz will happen.
 //
@@ -28,7 +31,14 @@ function WithRoom({ room }: { room: Room }) {
 }
 
 async function createRoom(id: string, initialNameValue: string) {
-	const room = new Room(id, initialNameValue);
+	const keys = await generateKeys();
+
+	const session = new Session(
+		`${ROOM_WEBSOCKET_SERVER_ORIGIN}/room/${id}`,
+		keys
+	);
+
+	const room = new Room(session, initialNameValue);
 	return room;
 }
 
