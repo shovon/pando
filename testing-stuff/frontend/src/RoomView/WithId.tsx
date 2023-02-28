@@ -2,6 +2,9 @@ import { useEffect, useReducer, useRef, useState } from "react";
 import { Room } from "../room";
 import * as it from "../iterables";
 
+// This is the actual room view where all the jazz will happen.
+//
+// Go wild
 function WithRoom({ room }: { room: Room }) {
 	const [participants, setParticipantsSet] = useState(room.participants);
 
@@ -14,6 +17,7 @@ function WithRoom({ room }: { room: Room }) {
 			unsubscribe();
 		};
 	});
+
 	return (
 		<ul>
 			{it.map(participants, ([k, participant]) => (
@@ -23,6 +27,16 @@ function WithRoom({ room }: { room: Room }) {
 	);
 }
 
+async function createRoom(id: string, initialNameValue: string) {
+	const room = new Room(id, initialNameValue);
+	return room;
+}
+
+/**
+ * This is the actual room view containing the ID for the room
+ * @param param0 The props for the component
+ * @returns JSX.Element
+ */
 export function WithId({
 	id,
 	initialNameValue,
@@ -30,22 +44,34 @@ export function WithId({
 	id: string;
 	initialNameValue: string;
 }) {
-	const roomRef = useRef<Room | null>(null);
-	const [, update] = useReducer(() => ({}), {});
+	const [room, setRoom] = useState<Room | null>(null);
+	const [error, setError] = useState<object | null>(null);
 
 	useEffect(() => {
-		console.log("Connecting");
-		roomRef.current = new Room(id, initialNameValue);
-		update();
+		createRoom(id, initialNameValue)
+			.then(setRoom)
+			.catch((e) => {
+				setError(e);
+			});
 
 		return () => {
-			roomRef.current?.dispose();
+			room?.dispose();
 		};
 	}, []);
 
-	if (!roomRef.current) {
+	if (error) {
+		return (
+			<div>
+				An unhandled error occurred. This is no fault of your own. This is the
+				mistake of the developers. If you are seeing this, please report this to
+				the developers so this can be fixed.
+			</div>
+		);
+	}
+
+	if (!room) {
 		return <div>Creating local room</div>;
 	}
 
-	return <WithRoom room={roomRef.current} />;
+	return <WithRoom room={room} />;
 }

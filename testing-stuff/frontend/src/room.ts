@@ -161,6 +161,7 @@ export class Room {
 	}
 
 	private refreshParticipants() {
+		// This needs to go
 		if (!this.session) {
 			console.error(
 				"Fatal error! The sesssion object is not defined, for some reason!"
