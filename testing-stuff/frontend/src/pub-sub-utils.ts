@@ -1,5 +1,7 @@
 import { Sub } from "@sparkscience/wskeyid-browser/src/pub-sub";
 
+export type ExtractSubParams<T> = T extends Sub<infer P> ? P : never;
+
 export function map<T, V>(sub: Sub<T>, mapping: (v: T) => V): Sub<V> {
 	return {
 		addEventListener(listener: (v: V) => void) {

@@ -11,11 +11,14 @@ import {
 	any,
 	ValidationResult,
 	ValidationSuccess,
+	Validator,
+	exact,
 } from "./validator";
-import { kvToReadOnlyMap } from "./custom-validators";
+import { json, kvToReadOnlyMap } from "./custom-validators";
 import { createSubject, Subject, Subscribable } from "./events";
 import * as subUtils from "./pub-sub-utils";
 import { start as _ } from "./pipe";
+import { Sub } from "@sparkscience/wskeyid-browser/src/pub-sub";
 
 const participantSchema = object({
 	name: string(),
@@ -66,8 +69,6 @@ export class Participant {
  * The main room instance for the call
  */
 export class Room {
-	private cancel: boolean = false;
-
 	// TODO: when the room state changes, not always will a missing participant
 	//   imply that the participant has left the room.
 	//
@@ -83,6 +84,11 @@ export class Room {
 	// This is just os odd. Oh well, it'll do for now
 	private _failedEvents: Subject<void> = createSubject();
 
+	/**
+	 * Initializes a new Room instance
+	 * @param session The session instance
+	 * @param _name The participant's name to connect to the room with
+	 */
 	constructor(private session: Session, private _name: string) {
 		this.connect();
 	}
@@ -116,7 +122,8 @@ export class Room {
 					try {
 						const { type, data } = JSON.parse(buffer);
 
-						// Might get ugly, but at least there will be some delegation here
+						// Might get ugly. We might need to move this code elsewhere
+						// eventually
 						switch (type) {
 							case "ROOM_STATE":
 								this.handleRoomState(data);
@@ -129,15 +136,14 @@ export class Room {
 			.catch((e) => {});
 	}
 
+	/**
+	 * Gets the participants in the room
+	 */
 	dispose() {
-		this.cancel = true;
 		this.session?.endSession();
 	}
 
-	/**
-	 * Handles the event that we got a ROOM_STATE message from the server
-	 * @param data The data to process
-	 */
+	// Handles the changes to the rooms' state
 	private handleRoomState(data: any) {
 		const roomState = roomStateSchema.validate(data);
 		if (roomState.isValid) {
@@ -146,6 +152,43 @@ export class Room {
 		} else {
 			console.error("Got something invalid from the server!");
 		}
+	}
+
+	// Filters out all messages that don't match the supplied schema
+	private getMessageOfSchema<T>(validator: Validator<T>): Sub<T> {
+		return _(this.session.messageEvents)
+			._((m) =>
+				subUtils.map(m, (message) => {
+					return validator.validate(message.data);
+				})
+			)
+			._((m) =>
+				subUtils.filter<ValidationResult<T>, ValidationSuccess<T>>(
+					m,
+					(message) => message.isValid
+				)
+			)
+			._((m) => subUtils.map(m, (message) => message.value)).value;
+	}
+
+	// Gets the message stream that is destined for a single participant
+	private getMessageEventsFromParticipant(id: string) {
+		return _(
+			this.getMessageOfSchema(
+				json(
+					object({
+						type: exact("MESSAGE_FROM_PARTICIPANT"),
+						data: object({
+							from: string(),
+							data: any(),
+						}),
+					})
+				)
+			)
+		)
+			._((m) => subUtils.map(m, (message) => message.data))
+			._((m) => subUtils.filter(m, (m) => m.from === id))
+			._((m) => subUtils.map(m, (m) => m.data)).value;
 	}
 
 	private refreshParticipants() {
@@ -158,39 +201,9 @@ export class Room {
 		}
 		const newParticipants = new Map<string, Participant>();
 		for (const [id, participant] of this._participants) {
-			const cool = _(this.session.messageEvents)
-				._((m) =>
-					subUtils.map(m, (message) => {
-						try {
-							const { type, data } = JSON.parse(message.data);
-							return { type, data };
-						} catch (e) {
-							return { type: string };
-						}
-					})
-				)
-				._((m) =>
-					subUtils.filter(
-						m,
-						(message) => message.type === "MESSAGE_FROM_PARTICIPANT"
-					)
-				)
-				._((m) =>
-					subUtils.map(m, (message) =>
-						messageFromParticipantSchema.validate(message.data)
-					)
-				)
-				._((m) =>
-					subUtils.filter<
-						ValidationResult<InferType<typeof messageFromParticipantSchema>>,
-						ValidationSuccess<InferType<typeof messageFromParticipantSchema>>
-					>(m, (message) => message.isValid)
-				)
-				._((m) => subUtils.map(m, (m) => m.value))
-				._((m) => subUtils.filter(m, (m) => m.from === id));
 			newParticipants.set(
 				id,
-				new Participant(cool, (message) => {
+				new Participant(this.getMessageEventsFromParticipant(id), (message) => {
 					this.session!.send(
 						JSON.stringify({
 							type: "SEND_MESSAGE",
@@ -214,6 +227,15 @@ export class Room {
 	 */
 	get name() {
 		return this._name;
+	}
+
+	/**
+	 * Sets the name of the participant that is in the room
+	 */
+	set name(name: string) {
+		// throw new Error("Not yet implemented");
+		this._name = name;
+		this.session.send(JSON.stringify({ type: "SET_NAME", data: name }));
 	}
 
 	/**
