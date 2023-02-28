@@ -62,11 +62,8 @@ export class Participant {
 	dispose() {}
 }
 
-// TODO: Room#session could potentially be set to null. Refactor this code.
-//   Perhaps use dependency injection to inject the session into the room
-
 /**
- *
+ * The main room instance for the call
  */
 export class Room {
 	private cancel: boolean = false;
@@ -85,10 +82,6 @@ export class Room {
 
 	// This is just os odd. Oh well, it'll do for now
 	private _failedEvents: Subject<void> = createSubject();
-
-	// constructor(private _roomId: string, private _name: string) {
-	// 	this.connect();
-	// }
 
 	constructor(private session: Session, private _name: string) {
 		this.connect();
@@ -115,11 +108,15 @@ export class Room {
 					}
 				});
 
+				// And here we just go loop-de-loop and listen for new messages coming
+				// in from the server
 				for await (const { data: buffer } of toAsyncIterable(
 					session.messageEvents
 				)) {
 					try {
 						const { type, data } = JSON.parse(buffer);
+
+						// Might get ugly, but at least there will be some delegation here
 						switch (type) {
 							case "ROOM_STATE":
 								this.handleRoomState(data);

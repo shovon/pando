@@ -1,5 +1,14 @@
 import { Sub } from "@sparkscience/wskeyid-browser/src/pub-sub";
 
+// Right now participant-to-participant messages are messages associated with a
+// specific participant.
+//
+// But eventually, we will also want to receive meta-information regarding a
+// particular participant.
+//
+// Question is, should the room manager handle these meta information or should
+// the participant handle it?
+
 /**
  * This represents a remote participant.
  *
