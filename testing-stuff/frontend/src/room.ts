@@ -13,7 +13,7 @@ import {
 	ValidationSuccess,
 } from "./validator";
 import { kvToReadOnlyMap } from "./custom-validators";
-import { createSubject, Subscribable } from "./events";
+import { createSubject, Subject, Subscribable } from "./events";
 import * as subUtils from "./pub-sub-utils";
 import { start as _ } from "./pipe";
 
@@ -23,15 +23,27 @@ const participantSchema = object({
 	// hasAudio: boolean(),
 });
 
+// The participants list
 const participantsListSchema = kvToReadOnlyMap(string(), participantSchema);
 
+// The room state that the server will be giving us.
+//
+// Note: we're not going to be storing the room state that the server gives us
+// as-is. We're going to be holding our own local instance of each participant
+// so that we can send and receive messages to/from them.
 const roomStateSchema = object({ participants: participantsListSchema });
 
-type Subject<T> = ReturnType<typeof createSubject<T>>;
-
+// The message that a remote participant will be relaying to us through the
+// server
 const messageFromParticipantSchema = object({ from: string(), data: any() });
 
+/**
+ * A participant in a room
+ */
 export class Participant {
+	// TODO: consider including a flag to indicate that the participant is
+	//   unresponsive
+
 	private unsubscribeFromMessages: () => void;
 
 	constructor(
@@ -55,7 +67,17 @@ export class Participant {
 export class Room {
 	private session: Session | null = null;
 	private cancel: boolean = false;
+
+	// TODO: when the room state changes, not always will a missing participant
+	//   imply that the participant has left the room.
+	//
+	//   So we are going to have to handle the edge case that when the connection
+	//   with the room server has been severed, then wait an n number of time
+	//   before killing the participant.
+	//
+	//   Perhaps maintain a flag somewhere.
 	private _participants: ReadOnlyMap<string, any> = new Map();
+
 	private _roomStateChangeEvents: Subject<void> = createSubject();
 
 	constructor(private _roomId: string, private _name: string) {
@@ -120,6 +142,10 @@ export class Room {
 		this.session?.endSession();
 	}
 
+	/**
+	 * Handles the event that we got a ROOM_STATE message from the server
+	 * @param data The data to process
+	 */
 	private handleRoomState(data: any) {
 		const roomState = roomStateSchema.validate(data);
 		if (roomState.isValid) {

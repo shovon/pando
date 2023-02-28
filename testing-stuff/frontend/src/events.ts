@@ -58,6 +58,8 @@ export const createSubject = <T>(): Subscribable<T> & Subscriber<T> => {
 	};
 };
 
+export type Subject<T> = ReturnType<typeof createSubject<T>>;
+
 export const createSubscribable = <T>(
 	fn: (subscriber: Subscriber<T>) => void
 ): Subscribable<T> => {
