@@ -69,7 +69,6 @@ export class Participant {
  *
  */
 export class Room {
-	private session: Session | null = null;
 	private cancel: boolean = false;
 
 	// TODO: when the room state changes, not always will a missing participant
@@ -84,24 +83,21 @@ export class Room {
 
 	private _roomStateChangeEvents: Subject<void> = createSubject();
 
-	constructor(private _roomId: string, private _name: string) {
+	// This is just os odd. Oh well, it'll do for now
+	private _failedEvents: Subject<void> = createSubject();
+
+	// constructor(private _roomId: string, private _name: string) {
+	// 	this.connect();
+	// }
+
+	constructor(private session: Session, private _name: string) {
 		this.connect();
 	}
 
 	private connect() {
 		Promise.resolve()
 			.then(async () => {
-				const keys = await generateKeys();
-
-				if (this.cancel) {
-					return;
-				}
-				this.session = new Session(
-					`${ROOM_WEBSOCKET_SERVER_ORIGIN}/room/${this._roomId}}`,
-					keys
-				);
-
-				let session = this.session;
+				const session = this.session;
 
 				session.sessionStatusChangeEvents.addEventListener((status) => {
 					if (status.type === "CONNECTING") {
@@ -113,11 +109,6 @@ export class Room {
 					} else if (status.type === "CONNECTED") {
 						session.send(
 							JSON.stringify({ type: "SET_NAME", data: this._name })
-						);
-						console.log(
-							"Connected to room %s with name %s",
-							this._roomId,
-							this._name
 						);
 					} else {
 						console.log("Status type is %s", status.type);
@@ -138,7 +129,7 @@ export class Room {
 					}
 				}
 			})
-			.catch(console.error);
+			.catch((e) => {});
 	}
 
 	dispose() {
@@ -219,15 +210,6 @@ export class Room {
 	 */
 	get roomStateChangeEvents(): Subscribable<void> {
 		return this._roomStateChangeEvents;
-	}
-
-	/**
-	 * Gets the current room's ID.
-	 *
-	 * This class will never be used for
-	 */
-	get roomId() {
-		return this._roomId;
 	}
 
 	/**
