@@ -63,11 +63,12 @@ type ParticipantState struct {
 	HasAudio bool `json:"hasAudio"`
 }
 
-// ROomState is the state of a room
+// RoomState is the state of a room
 type RoomState struct {
 	Participants []pairmap.KV[string, ParticipantState] `json:"participants"`
 }
 
+// CreateRoomStateMessage creates a message containing the room state
 func CreateRoomStateMessage(room RoomState) MessageWithData {
 	return MessageWithData{
 		Type: "ROOM_STATE",

@@ -76,12 +76,19 @@ func (r Room) Size() int {
 // GetRoomState returns the room state, which includes all participants and
 // their current state
 func (r Room) GetRoomState() servermessages.RoomState {
-	p := slice.Map(r.clients.Pairs(), func(kv sortedmap.KV[string, Client]) pairmap.KV[string, servermessages.ParticipantState] {
-		return pairmap.KV[string, servermessages.ParticipantState]{
-			Key:   kv.Key,
-			Value: kv.Value.Participant,
-		}
-	})
+	p := slice.Map(
+		r.clients.Pairs(),
+		func(kv sortedmap.KV[string, Client]) pairmap.KV[
+			string,
+			servermessages.ParticipantState,
+		] {
+			return pairmap.KV[string, servermessages.ParticipantState]{
+				Key:   kv.Key,
+				Value: kv.Value.Participant,
+			}
+		},
+	)
+
 	return servermessages.RoomState{
 		Participants: p,
 	}
