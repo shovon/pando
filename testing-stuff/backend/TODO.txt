@@ -1,0 +1,1 @@
+- Individually enabling and disabling audio/video just feels to domain-specific. Pros and cons, but we might want to watch out
