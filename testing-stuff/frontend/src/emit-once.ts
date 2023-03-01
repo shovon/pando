@@ -1,13 +1,13 @@
-type OnceEmitter<T> = {
+export type OnceEmitter<T> = {
 	readonly value: { isEmitted: false } | { isEmitted: true; value: T };
 	addEventListener(listener: (value: T) => void): () => void;
 };
 
-type Emittable<T> = {
+export type Emittable<T> = {
 	emit(value: T): void;
 };
 
-type SubjectOnce<T> = OnceEmitter<T> & Emittable<T>;
+export type SubjectOnce<T> = OnceEmitter<T> & Emittable<T>;
 
 /**
  * Creates an event emitter that will only ever be emitted once

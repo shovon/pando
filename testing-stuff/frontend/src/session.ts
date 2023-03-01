@@ -5,6 +5,7 @@ import PubSub, {
 	getNext,
 	Sub,
 } from "@sparkscience/wskeyid-browser/src/pub-sub";
+import { createEmitOnce, OnceEmitter, SubjectOnce } from "./emit-once";
 
 const backoffMSIncrement = 120;
 const maxBackoffExponent = 9;
@@ -33,6 +34,7 @@ export class Session {
 	private readonly _sessionStatusChangeEvents: PubSub<SessionStatus> =
 		new PubSub();
 	private messagesBuffer: string[] = [];
+	private sessionEndedOnceEmit: SubjectOnce<void> = createEmitOnce();
 
 	private backoffExponent = 0;
 	private sleeping = false;
@@ -135,9 +137,8 @@ export class Session {
 			}
 			this.setSessionStatus(status);
 			if (status.type === "CLOSED") {
-				if (!this._isSessionEnded) {
+				if (!this.isClosed) {
 					this.restart(null);
-				} else {
 				}
 			}
 		});
@@ -151,7 +152,7 @@ export class Session {
 	 */
 	endSession() {
 		this.connection?.close();
-		this._isSessionEnded = true;
+		this.sessionEndedOnceEmit.emit();
 	}
 
 	/**
@@ -203,6 +204,13 @@ export class Session {
 	 * attempt to reconnect to the WebSocket server
 	 */
 	get isClosed() {
-		return this._isSessionEnded;
+		return this.sessionEndedOnceEmit.value.isEmitted;
+	}
+
+	/**
+	 * Gets the single emitting event emitter for the event when the session ends
+	 */
+	get onceSessionEnded(): OnceEmitter<void> {
+		return this.sessionEndedOnceEmit;
 	}
 }
