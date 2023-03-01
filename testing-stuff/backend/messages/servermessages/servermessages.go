@@ -65,7 +65,7 @@ type ParticipantState struct {
 
 // ROomState is the state of a room
 type RoomState struct {
-	Participants pairmap.PairMap[string, ParticipantState] `json:"participants"`
+	Participants []pairmap.KV[string, ParticipantState] `json:"participants"`
 }
 
 func CreateRoomStateMessage(room RoomState) MessageWithData {

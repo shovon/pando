@@ -1,10 +1,11 @@
 package callroom
 
 import (
-	"backend/maputils"
 	"backend/messages/clientmessages"
 	"backend/messages/servermessages"
 	"backend/pairmap"
+	"backend/slice"
+	"backend/sortedmap"
 	"log"
 	"sync"
 )
@@ -14,12 +15,12 @@ import (
 // Please don't initialize this struct directly, use NewRoom instead
 type Room struct {
 	lock    *sync.RWMutex
-	clients pairmap.PairMap[string, Client]
+	clients sortedmap.SortedMap[string, Client]
 }
 
 // NewRoom creates a new Room instance
 func NewRoom() Room {
-	return Room{lock: &sync.RWMutex{}, clients: make(map[string]Client)}
+	return Room{lock: &sync.RWMutex{}, clients: sortedmap.New[string, Client]()}
 }
 
 // InsertClient inserts a new client into the room
@@ -27,7 +28,7 @@ func (r *Room) InsertClient(participantId string, participant Client) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
-	r.clients[participantId] = participant
+	r.clients.Set(participantId, participant)
 
 	r.signalRoomState()
 }
@@ -37,7 +38,7 @@ func (r *Room) RemoveClient(participantId string) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
-	delete(r.clients, participantId)
+	r.clients.Delete(participantId)
 
 	r.signalRoomState()
 }
@@ -53,7 +54,7 @@ func (r Room) SendMessageToClient(
 	r.lock.RLock()
 	defer r.lock.RUnlock()
 
-	participant, ok := r.clients[message.To]
+	participant, ok := r.clients.Get(message.To)
 	if !ok {
 		return false, nil
 	}
@@ -69,24 +70,25 @@ func (r Room) SendMessageToClient(
 
 // Size returns the number of clients in the room
 func (r Room) Size() int {
-	return len(r.clients)
+	return r.clients.Len()
 }
 
 // GetRoomState returns the room state, which includes all participants and
 // their current state
 func (r Room) GetRoomState() servermessages.RoomState {
+	p := slice.Map(r.clients.Pairs(), func(kv sortedmap.KV[string, Client]) pairmap.KV[string, servermessages.ParticipantState] {
+		return pairmap.KV[string, servermessages.ParticipantState]{
+			Key:   kv.Key,
+			Value: kv.Value.Participant,
+		}
+	})
 	return servermessages.RoomState{
-		Participants: maputils.Map(
-			r.clients,
-			func(key string, c Client) (string, servermessages.ParticipantState) {
-				return key, c.Participant
-			},
-		),
+		Participants: p,
 	}
 }
 
 func (r Room) signalRoomState() {
-	for _, participant := range r.clients {
+	for _, participant := range r.clients.Values() {
 		// This is so innefficient, but it needs to be done, for now
 		err := participant.WebSocketWriter.WriteJSON(
 			servermessages.CreateRoomStateMessage(r.GetRoomState()),

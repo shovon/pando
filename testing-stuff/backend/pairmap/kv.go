@@ -11,5 +11,5 @@ type KV[K comparable, V any] struct {
 var _ json.Marshaler = KV[int, any]{}
 
 func (k KV[K, V]) MarshalJSON() ([]byte, error) {
-	return json.Marshal([2]interface{}{k.Key, k.Value})
+	return json.Marshal([2]any{k.Key, k.Value})
 }
