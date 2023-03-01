@@ -18,7 +18,7 @@ func NewRoomManager() RoomManager {
 }
 
 // SendMessageToRoom is for handling an event where a participant intends to
-// send a message to another participant in the room.
+// send a message to another participant in the room
 func (r *RoomManager) SendMessageToParticipant(
 	roomId, fromParticipantId string,
 	message clientmessages.MessageToParticipant,
@@ -33,8 +33,6 @@ func (r *RoomManager) SendMessageToParticipant(
 		return false, nil
 	}
 
-	// TODO: if the underlying SendMessageToClient fails to send without an error
-	//   notify the client code that the intended partcipant doesn't exist
 	return room.SendMessageToClient(message, fromParticipantId)
 }
 

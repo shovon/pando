@@ -117,10 +117,7 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Just something to ensure that there are not thread safety issues.
-	//
-	// TODO: ensure there is absolutely no way to do anything that is
-	//   thread-unsafe
+	// Just something to ensure that there are not thread safety issues
 	writer := ws.NewThreadSafeWriter(c)
 
 	// Insert the participant into the room
@@ -135,8 +132,6 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 
 	defer rooms.RemoveParticipant(roomId, clientId)
 
-	// Creates a message channel, to read from
-
 	for {
 		event, ok := <-messageChannel
 		if !ok {
@@ -145,18 +140,22 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 		var message clientmessages.Message
 		err := json.Unmarshal(event, &message)
 		if err != nil {
+			// TODO: this seems like a serious mistake. Please investigate this
+			log.Println("Error parsing message: ", err.Error())
 			continue
 		}
 
 		m, err := clientmessages.ParseMessage(message)
 		if err != nil {
 			b, err := json.Marshal(servermessages.CreateClientError(servermessages.ErrorResponse{
-				Title: "Bad message body",
+				Title: "Failed to parse message",
 			}))
 
 			if err != nil {
-				log.Println("Was not able to marshal erro rmessage to be sent to client")
-				writer.Write([]byte("Bad message body"))
+				log.Println("Was not able to marshal error rmessage to be sent to client")
+
+				// TODO: this is a serious error. Please investigate this
+				writer.Write([]byte("Bad message body, and also failed to send error message. This is a serious server error"))
 				return
 			} else {
 				writer.Write(b)
@@ -165,89 +164,13 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 
 		switch v := m.(type) {
 		case clientmessages.MessageToParticipant:
-			rooms.SendMessageToParticipant(roomId, clientId, v)
-		}
-
-		switch message.Type {
-		case "MESSAGE_TO_PARTICIPANT":
-			// Recieved a message from participant, inteded for another participant
-
-			toParticipant, err := clientmessages.ParseMessageToParticipant(message.Data)
-			if err == nil {
-				rooms.SendMessageToParticipant(roomId, clientId, toParticipant)
-			} else {
-				// TODO: send a better message to participant
-				b, err := json.Marshal(servermessages.CreateClientError(servermessages.ErrorResponse{
-					Title: "Bad message",
-				}))
-				// TODO: handle the event when an error occurred attempting to marshal
-				//   JSON
-				if err != nil {
-					log.Println("Was not able to marshal error message to be sent to client")
-					return
-				} else {
-					writer.Write(b)
-				}
+			sent, err := rooms.SendMessageToParticipant(roomId, clientId, v)
+			if !sent {
+				log.Println("Attempted to send message to a participant that does not exist")
 			}
-		case "BROADCAST_MESSAGE":
-			b, err := json.Marshal(servermessages.CreateServerError(servermessages.ErrorResponse{
-				Title: "Not yet implemented",
-			}))
-			// TODO: handle the event when an error occurred attempting to marshal
-			//   JSON
+			// TODO: this seems like a serious bug. Please investigate this
 			if err != nil {
-				log.Println("Was not able to marshal error message to be sent to client")
-				return
-			} else {
-				writer.Write(b)
-			}
-		case "ENABLE_VIDEO":
-			b, err := json.Marshal(servermessages.CreateServerError(servermessages.ErrorResponse{
-				Title: "Not yet implemented",
-			}))
-			// TODO: handle the event when an error occurred attempting to marshal
-			//   JSON
-			if err != nil {
-				log.Println("Was not able to marshal error message to be sent to client")
-				return
-			} else {
-				writer.Write(b)
-			}
-		case "DISABLE_VIDEO":
-			b, err := json.Marshal(servermessages.CreateServerError(servermessages.ErrorResponse{
-				Title: "Not yet implemented",
-			}))
-			// TODO: handle the event when an error occurred attempting to marshal
-			//   JSON
-			if err != nil {
-				log.Println("Was not able to marshal error message to be sent to client")
-				return
-			} else {
-				writer.Write(b)
-			}
-		case "ENABLE_AUDIO":
-			b, err := json.Marshal(servermessages.CreateServerError(servermessages.ErrorResponse{
-				Title: "Not yet implemented",
-			}))
-			// TODO: handle the event when an error occurred attempting to marshal
-			//   JSON
-			if err != nil {
-				log.Println("Was not able to marshal error message to be sent to client")
-				return
-			} else {
-				writer.Write(b)
-			}
-		case "DISABLE_AUDIO":
-			b, err := json.Marshal(servermessages.CreateServerError(servermessages.ErrorResponse{
-				Title: "Not yet implemented",
-			}))
-			// TODO: handle the event when an error occurred attempting to marshal
-			//   JSON
-			if err != nil {
-				log.Println("Was not able to marshal error message to be sent to client")
-				return
-			} else {
-				writer.Write(b)
+				log.Println("Error sending message to participant: ", err.Error())
 			}
 		}
 
