@@ -4,9 +4,8 @@ import (
 	"backend/messages/clientmessages"
 	"backend/messages/servermessages"
 	"backend/roommanager/callroom"
+	"backend/ws"
 	"sync"
-
-	"github.com/gorilla/websocket"
 )
 
 type RoomManager struct {
@@ -43,8 +42,8 @@ func (r *RoomManager) SendMessageToParticipant(
 func (r *RoomManager) InsertParticipant(
 	roomId, participantId string,
 	participant struct {
-		Connection *websocket.Conn
-		Name       string
+		WebSocketWriter ws.ThreadSafeWriter
+		Name            string
 	},
 ) {
 	r.lock.Lock()
@@ -54,8 +53,8 @@ func (r *RoomManager) InsertParticipant(
 	room.InsertClient(
 		participantId,
 		callroom.Client{
-			Connection:  participant.Connection,
-			Participant: servermessages.ParticipantState{Name: participant.Name},
+			WebSocketWriter: participant.WebSocketWriter,
+			Participant:     servermessages.ParticipantState{Name: participant.Name},
 		},
 	)
 }

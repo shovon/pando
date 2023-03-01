@@ -58,7 +58,7 @@ func (r Room) SendMessageToClient(
 		return false, nil
 	}
 
-	err := participant.Connection.WriteJSON(
+	err := participant.WebSocketWriter.WriteJSON(
 		servermessages.CreateMessageToParticipant(fromParticipantId, message.Data),
 	)
 	if err != nil {
@@ -88,7 +88,7 @@ func (r Room) GetRoomState() servermessages.RoomState {
 func (r Room) signalRoomState() {
 	for _, participant := range r.clients {
 		// This is so innefficient, but it needs to be done, for now
-		err := participant.Connection.WriteJSON(
+		err := participant.WebSocketWriter.WriteJSON(
 			servermessages.CreateRoomStateMessage(r.GetRoomState()),
 		)
 		if err != nil {

@@ -20,8 +20,14 @@ func NewThreadSafeWriter(c *websocket.Conn) ThreadSafeWriter {
 	return ThreadSafeWriter{lock: &sync.Mutex{}, c: c}
 }
 
-func (t *ThreadSafeWriter) Write(message []byte) {
+func (t *ThreadSafeWriter) Write(message []byte) error {
 	t.lock.Lock()
 	defer t.lock.Unlock()
-	writeTextMessage(t.c, message)
+	return writeTextMessage(t.c, message)
+}
+
+func (t ThreadSafeWriter) WriteJSON(message interface{}) error {
+	t.lock.Lock()
+	defer t.lock.Unlock()
+	return writeJSONMessage(t.c, message)
 }

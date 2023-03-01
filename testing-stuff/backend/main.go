@@ -117,25 +117,25 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Insert the participant into the room
-	rooms.InsertParticipant(
-		roomId,
-		clientId,
-		struct {
-			Connection *websocket.Conn
-			Name       string
-		}{Connection: c, Name: name},
-	)
-
-	defer rooms.RemoveParticipant(roomId, clientId)
-
-	// Creates a message channel, to read from
-
 	// Just something to ensure that there are not thread safety issues.
 	//
 	// TODO: ensure there is absolutely no way to do anything that is
 	//   thread-unsafe
 	writer := ws.NewThreadSafeWriter(c)
+
+	// Insert the participant into the room
+	rooms.InsertParticipant(
+		roomId,
+		clientId,
+		struct {
+			WebSocketWriter ws.ThreadSafeWriter
+			Name            string
+		}{WebSocketWriter: writer, Name: name},
+	)
+
+	defer rooms.RemoveParticipant(roomId, clientId)
+
+	// Creates a message channel, to read from
 
 	for {
 		event, ok := <-messageChannel
@@ -146,6 +146,26 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 		err := json.Unmarshal(event, &message)
 		if err != nil {
 			continue
+		}
+
+		m, err := clientmessages.ParseMessage(message)
+		if err != nil {
+			b, err := json.Marshal(servermessages.CreateClientError(servermessages.ErrorResponse{
+				Title: "Bad message body",
+			}))
+
+			if err != nil {
+				log.Println("Was not able to marshal erro rmessage to be sent to client")
+				writer.Write([]byte("Bad message body"))
+				return
+			} else {
+				writer.Write(b)
+			}
+		}
+
+		switch v := m.(type) {
+		case clientmessages.MessageToParticipant:
+			rooms.SendMessageToParticipant(roomId, clientId, v)
 		}
 
 		switch message.Type {

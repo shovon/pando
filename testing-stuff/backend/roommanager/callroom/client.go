@@ -2,16 +2,15 @@ package callroom
 
 import (
 	"backend/messages/servermessages"
+	"backend/ws"
 	"encoding/json"
-
-	"github.com/gorilla/websocket"
 )
 
 // Represents a single participant, not as far as the problem domain, but as a
 // client in the call.
 type Client struct {
 	// The connection associated with the participant
-	Connection *websocket.Conn
+	WebSocketWriter ws.ThreadSafeWriter
 
 	// Participant is the metadata associated with the participant
 	Participant servermessages.ParticipantState

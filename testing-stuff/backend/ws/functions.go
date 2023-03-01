@@ -65,3 +65,12 @@ func writeTextMessage(c *websocket.Conn, m []byte) error {
 
 	return c.WriteMessage(websocket.TextMessage, m)
 }
+
+func writeJSONMessage(c *websocket.Conn, m any) error {
+	err := setWriteDeadline(c)
+	if err != nil {
+		return err
+	}
+
+	return c.WriteJSON(m)
+}
