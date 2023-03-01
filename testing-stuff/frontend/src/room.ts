@@ -101,13 +101,19 @@ export class Room {
 					}
 				}
 			})
-			.catch((e) => {});
+			.catch((e) => {
+				console.error(e);
+				this._failedEvents.emit();
+			});
 	}
 
 	/**
 	 * Gets the participants in the room
 	 */
 	dispose() {
+		this._participants.forEach((participant) => {
+			participant.dispose();
+		});
 		this.session?.endSession();
 	}
 

@@ -23,6 +23,7 @@ export class Participant {
 	private _audioStream: MediaStream | null = null;
 	private _screenshareStream: MediaStream | null = null;
 	private unsubscribeFromMessages: () => void;
+	private _receivedMessages: string[] = [];
 
 	constructor(
 		messageEvents: Sub<MessageEvent<any>>,
@@ -31,7 +32,7 @@ export class Participant {
 		this.unsubscribeFromMessages = filter(
 			messageEvents,
 			(m) => !!m
-		).addEventListener(() => {
+		).addEventListener((message) => {
 			// TOOD: handle messages
 		});
 	}

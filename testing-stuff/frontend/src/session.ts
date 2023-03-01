@@ -33,7 +33,6 @@ export class Session {
 	private readonly _sessionStatusChangeEvents: PubSub<SessionStatus> =
 		new PubSub();
 	private messagesBuffer: string[] = [];
-	private _isSessionEnded: boolean = false;
 
 	private backoffExponent = 0;
 	private sleeping = false;
