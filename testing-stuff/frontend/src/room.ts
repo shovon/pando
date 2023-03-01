@@ -19,6 +19,7 @@ import { createSubject, Subject, Subscribable } from "./events";
 import * as subUtils from "./pub-sub-utils";
 import { start as _ } from "./pipe";
 import { Sub } from "@sparkscience/wskeyid-browser/src/pub-sub";
+import { Participant } from "./participant";
 
 const participantSchema = object({
 	name: string(),
@@ -41,43 +42,10 @@ const roomStateSchema = object({ participants: participantsListSchema });
 const messageFromParticipantSchema = object({ from: string(), data: any() });
 
 /**
- * A participant in a room
- */
-export class Participant {
-	// TODO: consider including a flag to indicate that the participant is
-	//   unresponsive
-
-	private unsubscribeFromMessages: () => void;
-
-	constructor(
-		messageStream: Subscribable<any>,
-		private _sendMessage: (message: string) => void
-	) {
-		this.unsubscribeFromMessages = messageStream.subscribe((message) => {
-			// Handle messages here
-		});
-	}
-
-	sendMessage(message: string) {
-		this._sendMessage(message);
-	}
-
-	dispose() {}
-}
-
-/**
  * The main room instance for the call
  */
 export class Room {
-	// TODO: when the room state changes, not always will a missing participant
-	//   imply that the participant has left the room.
-	//
-	//   So we are going to have to handle the edge case that when the connection
-	//   with the room server has been severed, then wait an n number of time
-	//   before killing the participant.
-	//
-	//   Perhaps maintain a flag somewhere.
-	private _participants: ReadOnlyMap<string, any> = new Map();
+	private _participants: ReadOnlyMap<string, Participant> = new Map();
 
 	private _roomStateChangeEvents: Subject<void> = createSubject();
 
@@ -147,9 +115,11 @@ export class Room {
 	private handleRoomState(data: any) {
 		const roomState = roomStateSchema.validate(data);
 		if (roomState.isValid) {
-			this._participants = roomState.value.participants;
+			roomState.value.participants;
 			this._roomStateChangeEvents.emit();
 		} else {
+			// TODO: do something more serious so that the user is notified that
+			//   something really bad happened, to no fault of their own
 			console.error("Got something invalid from the server!");
 		}
 	}
@@ -191,26 +161,27 @@ export class Room {
 			._((m) => subUtils.map(m, (m) => m.data)).value;
 	}
 
-	private refreshParticipants() {
-		// This needs to go
-		if (!this.session) {
-			console.error(
-				"Fatal error! The sesssion object is not defined, for some reason!"
-			);
-			return;
-		}
+	private refreshParticipants(
+		participants: InferType<typeof participantsListSchema>
+	) {
 		const newParticipants = new Map<string, Participant>();
-		for (const [id, participant] of this._participants) {
+		for (const [id, participant] of participants) {
 			newParticipants.set(
 				id,
-				new Participant(this.getMessageEventsFromParticipant(id), (message) => {
-					this.session!.send(
-						JSON.stringify({
-							type: "SEND_MESSAGE",
-							data: message,
-						})
-					);
-				})
+				new Participant(
+					this.getMessageEventsFromParticipant(id),
+					(message: any) => {
+						this.session.send(
+							JSON.stringify({
+								type: "MESSAGE_TO_PARTICIPANT",
+								data: {
+									to: id,
+									data: message,
+								},
+							})
+						);
+					}
+				)
 			);
 		}
 	}

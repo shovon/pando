@@ -1,4 +1,6 @@
 import { Sub } from "@sparkscience/wskeyid-browser/src/pub-sub";
+import { start as _ } from "./pipe";
+import { filter } from "./pub-sub-utils";
 
 // Right now participant-to-participant messages are messages associated with a
 // specific participant.
@@ -14,10 +16,7 @@ import { Sub } from "@sparkscience/wskeyid-browser/src/pub-sub";
  *
  * This class is just a fancy tool to help independently manage incoming
  * streams, without having some central entity managing it all. Too much
- * headache, so very little reward.
- *
- * Perhaps, in the future, the single participant will also be used to handle
- * other things such as incoming DMs from the specified participant
+ * headache, so very little reward
  */
 export class Participant {
 	private _videoStream: MediaStream | null = null;
@@ -25,13 +24,21 @@ export class Participant {
 	private _screenshareStream: MediaStream | null = null;
 	private unsubscribeFromMessages: () => void;
 
-	constructor(messageEvents: Sub<MessageEvent<any>>) {
-		this.unsubscribeFromMessages = messageEvents.addEventListener(
-			(message) => {}
-		);
+	constructor(
+		messageEvents: Sub<MessageEvent<any>>,
+		private _sendMessage: (message: any) => void
+	) {
+		this.unsubscribeFromMessages = filter(
+			messageEvents,
+			(m) => !!m
+		).addEventListener(() => {
+			// TOOD: handle messages
+		});
 	}
 
-	sendMessage() {}
+	sendMessage(message: any) {
+		this._sendMessage(message);
+	}
 
 	dispose() {
 		this.unsubscribeFromMessages();

@@ -32,7 +32,7 @@ export type Subscribable<T> = {
 	subscribe(listener: Listener<T>): () => void;
 };
 
-export type Subscriber<T> = {
+export type Emitable<T> = {
 	emit(value: T): void;
 };
 
@@ -40,7 +40,7 @@ export type OperatorFunction<T, V> = (
 	subscribable: Subscribable<T>
 ) => Subscribable<V>;
 
-export const createSubject = <T>(): Subscribable<T> & Subscriber<T> => {
+export const createSubject = <T>(): Subscribable<T> & Emitable<T> => {
 	let listeners: Listener<T>[] = [];
 
 	return {
@@ -61,7 +61,7 @@ export const createSubject = <T>(): Subscribable<T> & Subscriber<T> => {
 export type Subject<T> = ReturnType<typeof createSubject<T>>;
 
 export const createSubscribable = <T>(
-	fn: (subscriber: Subscriber<T>) => void
+	fn: (subscriber: Emitable<T>) => void
 ): Subscribable<T> => {
 	const { subscribe, emit } = createSubject<T>();
 	fn({ emit });
