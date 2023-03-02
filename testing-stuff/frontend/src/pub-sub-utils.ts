@@ -2,6 +2,12 @@ import { Sub } from "@sparkscience/wskeyid-browser/src/pub-sub";
 
 export type ExtractSubParams<T> = T extends Sub<infer P> ? P : never;
 
+/**
+ * Maps a subscription instance from type T to type V
+ * @param sub The subscription to map
+ * @param mapping The mapping function from type T to type V
+ * @returns The mapped subscription
+ */
 export function map<T, V>(sub: Sub<T>, mapping: (v: T) => V): Sub<V> {
 	return {
 		addEventListener(listener: (v: V) => void) {

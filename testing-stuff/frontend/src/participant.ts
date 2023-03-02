@@ -11,6 +11,17 @@ import { filter } from "./pub-sub-utils";
 // Question is, should the room manager handle these meta information or should
 // the participant handle it?
 
+// Cases when the participant is unresponsive:
+//
+// - room died, and a reconnection happened and the room is waiting for all
+//   participants to reconnect
+// - client associated with the participant froze, and we're just waiting for
+//   a response
+//
+//   In events like these, the server will get a timeout from the client,
+//   killing the participant, and updating its state, and the server sending
+//   us the new state
+
 /**
  * This represents a remote participant.
  *

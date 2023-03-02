@@ -20,7 +20,7 @@ type SessionStatus =
 
 // An arbitrary amount of time in milliseconds to wait before considering that
 // the connection is steady after a restart
-export const restartTimeout = 10000;
+export const restartTimeout = 30000;
 
 /**
  * A wrapper object around AuthenticatedConnection. Not only this class performs
@@ -151,7 +151,9 @@ export class Session {
 	 * Closes the connection to the WebSocket server, and stops any reconnection
 	 */
 	endSession() {
+		// TODO: send a message to the server to tell it to close the connection
 		this.connection?.close();
+
 		this.sessionEndedOnceEmit.emit();
 	}
 
@@ -210,7 +212,7 @@ export class Session {
 	/**
 	 * Gets the single emitting event emitter for the event when the session ends
 	 */
-	get onceSessionEnded(): OnceEmitter<void> {
+	get sessionEnded(): OnceEmitter<void> {
 		return this.sessionEndedOnceEmit;
 	}
 }
