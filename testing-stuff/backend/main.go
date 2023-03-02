@@ -5,6 +5,7 @@ import (
 	"backend/messages/servermessages"
 	"backend/roommanager"
 	"backend/ws"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -43,12 +44,20 @@ func getPort() int {
 	return num
 }
 
+func getHS256Key() ([]byte, error) {
+	key := strings.Trim(os.Getenv("JWT_HS256_KEY"), " ")
+	if key == "" {
+		return nil, fmt.Errorf("JWT_HS256_KEY environment variable is not set")
+	}
+
+	return base64.StdEncoding.DecodeString(key)
+}
+
 // handleRoom is the event handler for the room endpoint.
 //
 // This is where when there is a connection to a room, the participant will
 // interact with the room
 func handleRoom(w http.ResponseWriter, r *http.Request) {
-
 	log.Print("Got connection from client")
 
 	// Grab the list of parameters
@@ -61,6 +70,7 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer c.Close()
+	defer fmt.Println("Connection ended")
 
 	log.Println("Got connection object")
 
@@ -99,7 +109,13 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 
 	var name string
 
-	for event := range messageChannel {
+	for {
+		event, ok := <-messageChannel
+
+		if !ok {
+			return
+		}
+
 		var message clientmessages.Message
 		err := json.Unmarshal(event, &message)
 		if err != nil {
@@ -130,8 +146,6 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 		}{WebSocketWriter: writer, Name: name},
 	)
 
-	defer rooms.RemoveParticipant(roomId, clientId)
-
 	for {
 		event, ok := <-messageChannel
 		if !ok {
@@ -152,7 +166,7 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 			}))
 
 			if err != nil {
-				log.Println("Was not able to marshal error rmessage to be sent to client")
+				log.Println("Was not able to marshal error message to be sent to client")
 
 				// TODO: this is a serious error. Please investigate this
 				writer.Write([]byte("Bad message body, and also failed to send error message. This is a serious server error"))
@@ -173,10 +187,9 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 				log.Println("Error sending message to participant: ", err.Error())
 			}
 		}
-
 	}
 
-	fmt.Println("Connection ended")
+	rooms.RemoveParticipant(roomId, clientId)
 }
 
 func main() {

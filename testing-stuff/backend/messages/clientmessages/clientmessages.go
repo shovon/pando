@@ -36,6 +36,8 @@ func ParseMessage(message Message) (any, error) {
 	case "DISABLE_VIDEO":
 	case "ENABLE_AUDIO":
 	case "DISABLE_AUDIO":
+	case "CLOSE_CONNECTION":
+		// The participant can optionally notify to the connection has ended
 	}
 
 	return UnknownMessage(message.Data), nil
