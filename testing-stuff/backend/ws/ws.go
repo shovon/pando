@@ -2,6 +2,7 @@ package ws
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -21,14 +22,14 @@ func NewDisconnectedThreadSafeWriter() ThreadSafeWriter {
 	return ThreadSafeWriter{isConnected: false, lock: &sync.Mutex{}, c: nil}
 }
 
-// IsConnected returns whether or not the connection is connected
-func (t ThreadSafeWriter) IsConnected() bool {
-	return t.isConnected
-}
-
 // NewThreadSafeWriter creates a new ThreadSafeWriter
 func NewThreadSafeWriter(c *websocket.Conn) ThreadSafeWriter {
 	return ThreadSafeWriter{isConnected: true, lock: &sync.Mutex{}, c: c}
+}
+
+// IsConnected returns whether or not the connection is connected
+func (t ThreadSafeWriter) IsConnected() bool {
+	return t.isConnected
 }
 
 // Write writes a message to the websocket connection (assuming there is a
@@ -38,6 +39,7 @@ func (t *ThreadSafeWriter) Write(message []byte) error {
 	defer t.lock.Unlock()
 
 	if !t.isConnected {
+		fmt.Println("Not connected not writing")
 		return errors.New("cannot be written to a disconnected connection")
 	}
 
@@ -51,6 +53,7 @@ func (t ThreadSafeWriter) WriteJSON(message interface{}) error {
 	defer t.lock.Unlock()
 
 	if !t.isConnected {
+		fmt.Println("Not connected not writing")
 		return errors.New("cannot be written to a disconnected connection")
 	}
 

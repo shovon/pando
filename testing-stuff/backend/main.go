@@ -136,11 +136,14 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 		if message.Type == "SET_NAME" {
 			// Got the participant name
 			n, err := clientmessages.ParseParticipantName(message.Data)
-			name = n
 			if err != nil {
 				log.Println("Error parsing participant name: ", err.Error())
+			} else {
+				name = n
+				log.Println("Got name:", name)
+				break
 			}
-			break
+
 		}
 	}
 

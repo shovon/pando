@@ -2,9 +2,9 @@ package roommanager
 
 import (
 	"backend/messages/clientmessages"
-	"backend/messages/servermessages"
 	"backend/roommanager/callroom"
 	"backend/ws"
+	"log"
 	"sync"
 )
 
@@ -47,12 +47,14 @@ func (r *RoomManager) InsertParticipant(
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
+	log.Println("Inserting participant", participantId, "into room", roomId)
+
 	room := r.getRoom(roomId)
 	room.InsertClient(
 		participantId,
 		callroom.Client{
 			WebSocketWriter: participant.WebSocketWriter,
-			Participant:     servermessages.ParticipantState{Name: participant.Name},
+			Participant:     callroom.ParticipantState{Name: participant.Name},
 		},
 	)
 }
