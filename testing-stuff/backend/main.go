@@ -1,6 +1,7 @@
 package main
 
 import (
+	"backend/config"
 	"backend/messages/clientmessages"
 	"backend/messages/servermessages"
 	"backend/roommanager"
@@ -14,12 +15,22 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/sparkscience/wskeyid-golang"
 )
 
 const defaultPort = 3333
+
+// This is the function
+func generateJWT(clientId string) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"clientId": clientId,
+	})
+
+	return token.SignedString(config.GetHS256Key())
+}
 
 var rooms = roommanager.NewRoomManager()
 

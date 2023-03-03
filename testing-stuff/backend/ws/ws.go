@@ -15,6 +15,8 @@ type ThreadSafeWriter struct {
 	c *websocket.Conn
 }
 
+var _ Writer = &ThreadSafeWriter{}
+
 // NewThreadSafeWriter creates a new ThreadSafeWriter
 func NewThreadSafeWriter(c *websocket.Conn) ThreadSafeWriter {
 	return ThreadSafeWriter{lock: &sync.Mutex{}, c: c}

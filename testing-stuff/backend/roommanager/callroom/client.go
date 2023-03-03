@@ -21,3 +21,7 @@ var _ json.Marshaler = Client{}
 func (c Client) MarshalJSON() ([]byte, error) {
 	return json.Marshal(c.Participant)
 }
+
+type NullableWriter struct {
+	WebSocketWriter *ws.ThreadSafeWriter
+}

@@ -23,14 +23,14 @@ func init() {
 	}
 }
 
-// GetJWTKey returns a copy of the JWT HS256 key
+// GetHS256Key returns a copy of the JWT HS256 key
 //
 // Note: due to data safety and integrity, this function returns a copy of the
 // key. This is to prevent the key from being modified by the caller.
 //
 // For performance reasons, the caller should cache the key returned by this
 // function.
-func GetJWTKey() []byte {
+func GetHS256Key() []byte {
 	k := make([]byte, len(jwtHS256Key))
 	copy(k, jwtHS256Key)
 	return k
