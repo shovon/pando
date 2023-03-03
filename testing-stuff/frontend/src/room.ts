@@ -74,6 +74,9 @@ export class Room {
 							status.status
 						);
 					} else if (status.type === "CONNECTED") {
+						console.log(
+							"Connected. Now sending name and awaiting name and room status"
+						);
 						session.send(
 							JSON.stringify({ type: "SET_NAME", data: this._name })
 						);
@@ -119,8 +122,11 @@ export class Room {
 
 	// Handles the changes to the rooms' state
 	private handleRoomState(data: any) {
+		console.log("Got room state");
+
 		const roomState = roomStateSchema.validate(data);
 		if (roomState.isValid) {
+			console.log(roomState.value);
 			roomState.value.participants;
 			this._roomStateChangeEvents.emit();
 		} else {
