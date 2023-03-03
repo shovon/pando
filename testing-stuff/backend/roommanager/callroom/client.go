@@ -6,6 +6,11 @@ import (
 	"encoding/json"
 )
 
+const (
+	AwaitingConnection = "AWAITING_CONNECTION"
+	Connected          = "CONNECTED"
+)
+
 // Represents a single participant, not as far as the problem domain, but as a
 // client in the call.
 type Client struct {
@@ -20,8 +25,4 @@ var _ json.Marshaler = Client{}
 
 func (c Client) MarshalJSON() ([]byte, error) {
 	return json.Marshal(c.Participant)
-}
-
-type NullableWriter struct {
-	WebSocketWriter *ws.ThreadSafeWriter
 }
