@@ -161,6 +161,7 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 	)
 
 	for {
+		log.Println("Waiting for next message")
 		event, ok := <-messageChannel
 		if !ok {
 			break
@@ -203,6 +204,7 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	log.Println("Participant left the room")
 	rooms.RemoveParticipant(roomId, clientId)
 }
 
