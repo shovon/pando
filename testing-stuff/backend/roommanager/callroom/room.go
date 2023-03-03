@@ -80,9 +80,10 @@ func (r Room) GetRoomState() servermessages.RoomState {
 		r.clients.Pairs(),
 		func(kv sortedmap.KV[string, Client]) pairmap.KV[
 			string,
-			servermessages.ParticipantState,
+			any,
 		] {
-			return pairmap.KV[string, servermessages.ParticipantState]{
+			// We're gonna need so much more as well
+			return pairmap.KV[string, any]{
 				Key:   kv.Key,
 				Value: kv.Value.Participant,
 			}

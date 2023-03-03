@@ -51,21 +51,9 @@ func CreateMessageToParticipant(from string, message json.RawMessage) MessageWit
 	}
 }
 
-// ParticipantState is the state of a participant
-type ParticipantState struct {
-	// Name is the name of the participant
-	Name string `json:"name"`
-
-	// HasVideo is true if the participant has video enabled
-	HasVideo bool `json:"hasVideo"`
-
-	// HasAudio is true if the participant has audio enabled
-	HasAudio bool `json:"hasAudio"`
-}
-
 // RoomState is the state of a room
 type RoomState struct {
-	Participants []pairmap.KV[string, ParticipantState] `json:"participants"`
+	Participants []pairmap.KV[string, any] `json:"participants"`
 }
 
 // CreateRoomStateMessage creates a message containing the room state
