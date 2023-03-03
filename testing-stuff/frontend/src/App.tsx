@@ -1,7 +1,6 @@
 import { StrictMode, useState } from "react";
 import reactLogo from "./assets/react.svg";
 import "./App.css";
-import { Room } from "./room";
 import { RoomView } from "./RoomView/RoomView";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { GetRoom } from "./GetRoom";

@@ -153,7 +153,6 @@ export class Session {
 	endSession() {
 		// TODO: send a message to the server to tell it to close the connection
 		this.connection?.close();
-
 		this.sessionEndedOnceEmit.emit();
 	}
 

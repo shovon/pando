@@ -117,13 +117,13 @@ export class Room {
 		this._participants.forEach((participant) => {
 			participant.dispose();
 		});
-		this.session?.endSession();
+
+		// TOOD: maybe it's a bad idea to do this here?
+		this.session.endSession();
 	}
 
 	// Handles the changes to the rooms' state
 	private handleRoomState(data: any) {
-		console.log("Got room state");
-
 		const roomState = roomStateSchema.validate(data);
 		if (roomState.isValid) {
 			console.log(roomState.value);

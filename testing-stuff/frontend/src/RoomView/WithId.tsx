@@ -31,6 +31,8 @@ function WithRoom({ room }: { room: Room }) {
 }
 
 async function createRoom(id: string, initialNameValue: string) {
+	console.log("Creating room");
+
 	const keys = await generateKeys();
 
 	const session = new Session(
@@ -56,16 +58,31 @@ export function WithId({
 }) {
 	const [room, setRoom] = useState<Room | null>(null);
 	const [error, setError] = useState<object | null>(null);
+	const disposedRef = useRef(false);
 
 	useEffect(() => {
-		createRoom(id, initialNameValue)
-			.then(setRoom)
-			.catch((e) => {
-				setError(e);
-			});
+		let r: Promise<Room | null> = Promise.resolve(null);
+		if (!room && !disposedRef.current) {
+			r = createRoom(id, initialNameValue)
+				.then((room) => {
+					if (disposedRef.current) {
+						room.dispose();
+						return null;
+					}
+					setRoom(room);
+					return room;
+				})
+				.catch((e) => {
+					setError(e);
+					return null;
+				});
+		}
 
 		return () => {
-			room?.dispose();
+			disposedRef.current = true;
+			r.then((r) => {
+				r?.dispose();
+			});
 		};
 	}, []);
 
