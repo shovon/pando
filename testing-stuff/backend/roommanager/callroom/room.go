@@ -73,9 +73,33 @@ func (r Room) Size() int {
 	return r.clients.Len()
 }
 
+type DetailedParticipantState struct {
+	ParticipantState
+
+	ConnectionStatus string `json:"connectionStatus"`
+}
+
+func (r Room) getParticipantsState() []DetailedParticipantState {
+	r.lock.RLock()
+	defer r.lock.RUnlock()
+
+	participants := make([]DetailedParticipantState, r.clients.Len())
+	for i, participant := range r.clients.Values() {
+		participants[i] = DetailedParticipantState{
+			ParticipantState: participant.Participant,
+			ConnectionStatus: participant.ConnectionStatus(),
+		}
+	}
+
+	return participants
+}
+
 // GetRoomState returns the room state, which includes all participants and
 // their current state
 func (r Room) GetRoomState() servermessages.RoomState {
+	r.lock.RLock()
+	defer r.lock.RUnlock()
+
 	p := slice.Map(
 		r.clients.Pairs(),
 		func(kv sortedmap.KV[string, Client]) pairmap.KV[

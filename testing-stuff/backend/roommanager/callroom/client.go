@@ -34,8 +34,12 @@ type Client struct {
 
 var _ json.Marshaler = Client{}
 
-func (c Client) IsConnected() bool {
-	return c.WebSocketWriter.IsConnected()
+// ConnectionStatus returns the connection status of the participant
+func (c Client) ConnectionStatus() string {
+	if !c.WebSocketWriter.IsConnected() {
+		return AwaitingConnection
+	}
+	return Connected
 }
 
 func (c Client) MarshalJSON() ([]byte, error) {
