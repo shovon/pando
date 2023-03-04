@@ -9,7 +9,7 @@ import (
 )
 
 var jwtHS256Key []byte
-var currentProcessKey []byte = make([]byte, 64)
+var currentProcessKey []byte = make([]byte, 16)
 
 func init() {
 	key := strings.Trim(os.Getenv("JWT_HS256_KEY"), " ")
