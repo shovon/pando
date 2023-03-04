@@ -4,9 +4,12 @@ import (
 	"backend/config"
 	"backend/messages/clientmessages"
 	"backend/messages/servermessages"
+	"backend/nextint"
 	"backend/roommanager"
 	"backend/ws"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -14,6 +17,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
+	"unsafe"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
@@ -24,12 +29,57 @@ import (
 const defaultPort = 3333
 
 // This is the function
-func generateJWT(clientId string) (string, error) {
+func generateJWT(clientId, roomId string) (string, error) {
+	i := nextint.NextInt()
+	iat := time.Now().Unix()
+
+	b := make([]byte, unsafe.Sizeof(i)+unsafe.Sizeof(iat))
+	binary.LittleEndian.PutUint64(b, uint64(i))
+	binary.LittleEndian.PutUint64(b[8:], uint64(iat))
+
+	hash := sha256.Sum256(b)
+
+	hashString := string(hash[:])
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		// TODO: consider softcoding the iss field
+		"iss":      "demo-room-backend",
 		"clientId": clientId,
+		"roomId":   roomId,
+		"jti":      hashString,
+		"iat":      iat,
 	})
 
 	return token.SignedString(config.GetHS256Key())
+}
+
+func verifyJWT(clientId, roomId, j string) (bool, error) {
+	token, err := jwt.Parse(j, func(token *jwt.Token) (interface{}, error) {
+		// Don't forget to validate the alg is what you expect:
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
+
+		return config.GetHS256Key(), nil
+	})
+
+	if err != nil {
+		return false, err
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		if claims["clientId"] != clientId {
+			return false, nil
+		}
+
+		if claims["roomId"] != roomId {
+			return false, nil
+		}
+
+		return true, nil
+	} else {
+		return false, nil
+	}
 }
 
 var rooms = roommanager.NewRoomManager()
@@ -208,10 +258,15 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 	rooms.RemoveParticipant(roomId, clientId)
 }
 
+func handleLeaveRoom(w http.ResponseWriter, r *http.Request) {
+
+}
+
 func main() {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/room/{id}", handleRoom)
+	r.HandleFunc("/leave-room/{roomId}/{participantId}", handleLeaveRoom)
 
 	port := getPort()
 	log.Printf("Listening on port %d", port)
