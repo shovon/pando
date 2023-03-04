@@ -1,6 +1,7 @@
 package config
 
 import (
+	"crypto/rand"
 	"encoding/base64"
 	"log"
 	"os"
@@ -8,6 +9,7 @@ import (
 )
 
 var jwtHS256Key []byte
+var currentProcessKey []byte = make([]byte, 64)
 
 func init() {
 	key := strings.Trim(os.Getenv("JWT_HS256_KEY"), " ")
@@ -19,6 +21,10 @@ func init() {
 	jwtHS256Key, err = base64.StdEncoding.DecodeString(key)
 
 	if err != nil {
+		log.Fatal(err)
+	}
+
+	if _, err := rand.Read(currentProcessKey); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -33,5 +39,17 @@ func init() {
 func GetHS256Key() []byte {
 	k := make([]byte, len(jwtHS256Key))
 	copy(k, jwtHS256Key)
+	return k
+}
+
+// GetCurrentProcessKey returns a copy of the current process key.
+//
+// The current process key is just a string of bytes that has been initialized
+// at random, on startup.
+//
+// Use it for whatever you want
+func GetCurrentProcessKey() []byte {
+	k := make([]byte, len(currentProcessKey))
+	copy(k, currentProcessKey)
 	return k
 }

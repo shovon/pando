@@ -28,14 +28,20 @@ import (
 
 const defaultPort = 3333
 
-// This is the function
 func generateJWT(clientId, roomId string) (string, error) {
 	i := nextint.NextInt()
 	iat := time.Now().Unix()
 
-	b := make([]byte, unsafe.Sizeof(i)+unsafe.Sizeof(iat))
+	key := config.GetCurrentProcessKey()
+
+	b := make(
+		[]byte,
+		int(unsafe.Sizeof(i))+int(unsafe.Sizeof(iat))+len(key),
+	)
+
 	binary.LittleEndian.PutUint64(b, uint64(i))
 	binary.LittleEndian.PutUint64(b[8:], uint64(iat))
+	copy(b[16:], key)
 
 	hash := sha256.Sum256(b)
 
@@ -57,7 +63,7 @@ func verifyJWT(clientId, roomId, j string) (bool, error) {
 	token, err := jwt.Parse(j, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 
 		return config.GetHS256Key(), nil
@@ -266,6 +272,8 @@ func main() {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/room/{id}", handleRoom)
+
+	// TODO: ensure that this works exclusively with POST requests
 	r.HandleFunc("/leave-room/{roomId}/{participantId}", handleLeaveRoom)
 
 	port := getPort()
