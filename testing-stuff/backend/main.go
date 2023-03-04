@@ -1,6 +1,7 @@
 package main
 
 import (
+	"backend/config"
 	"backend/messages/clientmessages"
 	"backend/messages/servermessages"
 	"backend/roommanager"
@@ -9,8 +10,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -18,29 +17,10 @@ import (
 	"github.com/sparkscience/wskeyid-golang"
 )
 
-const defaultPort = 3333
-
 var rooms = roommanager.NewRoomManager()
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
-}
-
-// Gets the appropriate port to get the server running on.
-// If the PORT environment variable is set, then it will use that. Otherwise, it
-// will use the default port
-func getPort() int {
-	port := strings.Trim(os.Getenv("PORT"), " ")
-	if port == "" {
-		return defaultPort
-	}
-
-	num, err := strconv.Atoi(port)
-	if err != nil {
-		return defaultPort
-	}
-
-	return num
 }
 
 // handleRoom is the event handler for the room endpoint.
@@ -199,7 +179,7 @@ func main() {
 	// TODO: ensure that this works exclusively with POST requests
 	r.HandleFunc("/leave-room/{roomId}/{participantId}", handleLeaveRoom)
 
-	port := getPort()
+	port := config.GetPort()
 	log.Printf("Listening on port %d", port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), r))
 }

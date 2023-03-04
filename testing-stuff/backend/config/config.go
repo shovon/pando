@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -52,4 +53,23 @@ func GetCurrentProcessKey() []byte {
 	k := make([]byte, len(currentProcessKey))
 	copy(k, currentProcessKey)
 	return k
+}
+
+const defaultPort = 3333
+
+// GetPort gets the appropriate port to get the server running on.
+// If the PORT environment variable is set, then it will use that. Otherwise, it
+// will use the default port
+func GetPort() int {
+	port := strings.Trim(os.Getenv("PORT"), " ")
+	if port == "" {
+		return defaultPort
+	}
+
+	num, err := strconv.Atoi(port)
+	if err != nil {
+		return defaultPort
+	}
+
+	return num
 }
