@@ -142,7 +142,7 @@ func (r Room) signalRoomState() {
 	for _, participant := range r.clients.Values() {
 		// This is so innefficient, but it needs to be done, for now
 		fmt.Println("Sending room state to", participant.Participant.Name)
-		err := participant.WebSocketWriter.WriteJSON(
+		err := participant.Connection.WriteJSON(
 			servermessages.CreateRoomStateMessage(r.getRoomState()),
 		)
 		if err != nil {
