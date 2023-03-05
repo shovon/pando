@@ -18,12 +18,16 @@ func NewRoomManager() RoomManager {
 	return RoomManager{lock: &sync.RWMutex{}, rooms: make(map[string]callroom.Room)}
 }
 
+type RoomNoExist struct {
+	ParticipantId string
+}
+
 // SendMessageToRoom is for handling an event where a participant intends to
 // send a message to another participant in the room
 func (r *RoomManager) SendMessageToParticipant(
 	roomId, fromParticipantId string,
 	message clientmessages.MessageToParticipant,
-) (bool, error) {
+) (any, error) {
 	r.lock.RLock()
 	defer r.lock.RUnlock()
 
@@ -31,7 +35,7 @@ func (r *RoomManager) SendMessageToParticipant(
 	if !ok {
 		// TODO: be specific about the error. Notify the client code that the reason
 		//   why sending failed is because the room doesn't exist
-		return false, nil
+		return nil, nil
 	}
 
 	return room.SendMessageToClient(message, fromParticipantId)

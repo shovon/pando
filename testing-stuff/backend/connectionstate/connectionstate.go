@@ -20,8 +20,6 @@ type Connected struct {
 // Disconnected is the state when the connection is disconnected
 type Disconnected struct{}
 
-// TODO: perhaps letting the Connection object be a writer is a bad idea
-
 // Connection is just a safe connection object that can be used to send messages
 type Connection struct {
 	state any

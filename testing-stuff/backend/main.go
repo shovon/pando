@@ -79,10 +79,6 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 
 	var name string
 
-	// TODO: maybe there should be a point where the participant failing to
-	// provide a name should be considered a failure and the participant should
-	// be kicked out of the room
-
 	attempts := 0
 
 	for {
@@ -176,9 +172,15 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 			if !sent {
 				log.Println("Attempted to send message to a participant that does not exist")
 			}
-			// TODO: this seems like a serious bug. Please investigate this
 			if err != nil {
 				log.Println("Error sending message to participant: ", err.Error())
+				b, err := json.Marshal(servermessages.CreateClientError(servermessages.ErrorResponse{
+					Title: "Failed to send message to participant",
+				}))
+				if err != nil {
+					log.Println("Was not able to marshal error message to be sent to client")
+				}
+				writer.Write(b)
 			}
 		}
 	}

@@ -23,6 +23,26 @@ type MessageToParticipant struct {
 	Data json.RawMessage `json:"data"`
 }
 
+func CreateFailedToDeliverMessage(m MessageWithData) MessageWithData {
+	return MessageWithData{
+		Type: "FAILED_TO_DELIVER_MESSAGE",
+		Data: m,
+	}
+}
+
+type ParticipantDoesNotExist struct {
+	ParticipantID string `json:"participantId"`
+}
+
+func CreateParticipantDoesNotExist(participantID string) MessageWithData {
+	return MessageWithData{
+		Type: "PARTICIPANT_DOES_NOT_EXIST",
+		Data: ParticipantDoesNotExist{
+			ParticipantID: participantID,
+		},
+	}
+}
+
 // CreateClientError creates a client error message, in order to notify the
 // client that it has sent a message that the server cannot understand
 func CreateClientError(err ErrorResponse) MessageWithData {

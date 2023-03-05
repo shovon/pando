@@ -11,6 +11,7 @@ type Message struct {
 type MessageToParticipant struct {
 	To   string          `json:"type"`
 	Data json.RawMessage `json:"data"`
+	ID   string          `json:"id"`
 }
 
 type UnknownMessage json.RawMessage
