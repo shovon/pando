@@ -2,6 +2,12 @@ package connectionstate
 
 import "backend/writer"
 
+const (
+	AuthenticatingState = "AUTHENTICATING"
+	ConnectedState      = "CONNECTED"
+	DisconnectedState   = "DISCONNECTED"
+)
+
 // Authenticating is the state when the connection is being authenticated
 type Authenticating struct{}
 
@@ -13,6 +19,8 @@ type Connected struct {
 
 // Disconnected is the state when the connection is disconnected
 type Disconnected struct{}
+
+// TODO: perhaps letting the Connection object be a writer is a bad idea
 
 // Connection is just a safe connection object that can be used to send messages
 type Connection struct {
@@ -37,14 +45,15 @@ func NewDisconnectedConnection() Connection {
 	return Connection{state: Disconnected{}}
 }
 
+// State returns the state of the connection
 func (c Connection) State() string {
 	switch c.state.(type) {
 	case Authenticating:
-		return "AUTHENTICATING"
+		return AuthenticatingState
 	case Connected:
-		return "CONNECTED"
+		return ConnectedState
 	case Disconnected:
-		return "DISCONNECTED"
+		return DisconnectedState
 	}
 
 	panic("Unknown connection state")

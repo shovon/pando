@@ -1,13 +1,8 @@
 package callroom
 
 import (
-	"backend/ws"
+	"backend/connectionstate"
 	"encoding/json"
-)
-
-const (
-	Disconnected = "DISCONNECTED"
-	Connected    = "CONNECTED"
 )
 
 // ParticipantState is the state of a participant
@@ -26,8 +21,9 @@ type ParticipantState struct {
 // client in the call.
 type Client struct {
 	// The WebSocket writer is used to send messages to the client. This exists
-	// to prevent race conditions when sending messages to the client
-	WebSocketWriter ws.ThreadSafeWriter
+	// to prevent race conditions when sending messages to the client. A race
+	// condition will either result in the
+	Connection connectionstate.Connection
 
 	// Participant is the metadata associated with the participant
 	Participant ParticipantState
@@ -43,10 +39,7 @@ var _ json.Marshaler = Client{}
 // before the crash will be re-inserted into the room, but they will not be
 // connected to the server.
 func (c Client) ConnectionStatus() string {
-	if !c.WebSocketWriter.IsConnected() {
-		return Disconnected
-	}
-	return Connected
+	return c.Connection.State()
 }
 
 func (c Client) MarshalJSON() ([]byte, error) {
