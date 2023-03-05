@@ -56,15 +56,15 @@ func (r *Room) DisconnectClient(participantId string) {
 	if !ok {
 		return
 	}
-
-	client.Connection.Disconnect()
 }
 
-func idempotentSend(conn connectionstate.Connection, message interface{}) {
+func idempotentSend(conn connectionstate.Connection, message interface{}) error {
 	writer, ok := conn.State().(connectionstate.Connected)
 	if ok {
-		writer.WriteJSON(message)
+		return writer.WriteJSON(message)
 	}
+
+	return nil
 }
 
 // TODO: perhaps return a more detailed message to the original sender as to
@@ -94,15 +94,18 @@ func (r Room) SendMessageToClient(
 	switch v := participant.Connection.State().(type) {
 	case connectionstate.Connecting:
 		if ok {
-			idempotentSend(
+			err := idempotentSend(
 				sender.Connection,
 				servermessages.CreateFailedToDeliverMessage(
 					servermessages.CreateParticipantConnectingMessage(message.To),
 					message.ID,
 				),
 			)
+
+			return err
 		}
 	case connectionstate.Connected:
+		// TODO: this is stupid
 		return v.WriteJSON(
 			servermessages.CreateMessageToParticipant(fromParticipantId, message.Data),
 		)
@@ -132,7 +135,7 @@ func (r Room) getParticipantsState() []DetailedParticipantState {
 	for i, participant := range r.clients.Values() {
 		participants[i] = DetailedParticipantState{
 			ParticipantState: participant.Participant,
-			ConnectionStatus: participant.ConnectionStatus(),
+			ConnectionStatus: connectionstate.ConnectionStatus(participant.Connection.State()),
 		}
 	}
 
@@ -172,7 +175,7 @@ func (r Room) signalRoomState() {
 	for _, participant := range r.clients.Values() {
 		// This is so innefficient, but it needs to be done, for now
 		fmt.Println("Sending room state to", participant.Participant.Name)
-		err := participant.Connection.WriteJSON(
+		err := idempotentSend(participant.Connection,
 			servermessages.CreateRoomStateMessage(r.getRoomState()),
 		)
 		if err != nil {

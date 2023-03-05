@@ -28,6 +28,18 @@ var upgrader = websocket.Upgrader{
 // This is where when there is a connection to a room, the participant will
 // interact with the room
 func handleRoom(w http.ResponseWriter, r *http.Request) {
+	// Several notes about a connection.
+	//
+	// - can be assigned (usually upon first connection)
+	// - can be reassigned (when a participant jumps from one Internet connection
+	//   to another)
+	// - can be unassigned (when the server crashes and restarts, and the last
+	//   room state is loaded)
+	//   - in this situation, we give the participant 60 seconds to connect before
+	//     officially kicking them out of the room
+	//   - (Note: there might also be other situations where a connection is
+	//     unassigned)
+
 	log.Print("Got connection from client")
 
 	// Grab the list of parameters

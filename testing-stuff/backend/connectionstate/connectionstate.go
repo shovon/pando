@@ -33,6 +33,19 @@ func (c Connected) WriteJSON(message interface{}) error {
 // to be removed from the room
 type Disconnected struct{}
 
+func ConnectionStatus(state any) string {
+	switch state.(type) {
+	case Connecting:
+		return AuthenticatingState
+	case Connected:
+		return ConnectedState
+	case Disconnected:
+		return DisconnectedState
+	default:
+		return "UNKNOWN"
+	}
+}
+
 // Connection is just a safe connection object that can be used to send messages
 type Connection struct {
 	state any
