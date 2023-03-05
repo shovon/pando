@@ -37,6 +37,19 @@ func NewDisconnectedConnection() Connection {
 	return Connection{state: Disconnected{}}
 }
 
+func (c Connection) State() string {
+	switch c.state.(type) {
+	case Authenticating:
+		return "AUTHENTICATING"
+	case Connected:
+		return "CONNECTED"
+	case Disconnected:
+		return "DISCONNECTED"
+	}
+
+	panic("Unknown connection state")
+}
+
 // Write writes a message to the connection
 func (c Connection) Write(message []byte) error {
 	writer, ok := c.state.(Connected)
