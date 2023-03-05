@@ -79,6 +79,9 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 
 	var name string
 
+	// TODO: maybe there should be a point where the participant failing to
+	// provide a name should be considered a failure and the participant should
+	// be kicked out of the room
 	for {
 		event, ok := <-messageChannel
 
@@ -102,7 +105,6 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 				log.Println("Got name:", name)
 				break
 			}
-
 		}
 	}
 
@@ -168,16 +170,28 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleLeaveRoom(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
 
+	roomId, ok := params["roomId"]
+	if !ok {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	participantId, ok := params["participantId"]
+	if !ok {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	rooms.RemoveParticipant(roomId, participantId)
 }
 
 func main() {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/room/{id}", handleRoom)
-
-	// TODO: ensure that this works exclusively with POST requests
-	r.HandleFunc("/leave-room/{roomId}/{participantId}", handleLeaveRoom)
+	r.HandleFunc("/leave-room/{roomId}/{participantId}", handleLeaveRoom).Methods(http.MethodPost)
 
 	port := config.GetPort()
 	log.Printf("Listening on port %d", port)

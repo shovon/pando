@@ -42,8 +42,20 @@ func (r *Room) RemoveClient(participantId string) {
 	defer r.lock.Unlock()
 
 	r.clients.Delete(participantId)
-
 	r.signalRoomState()
+}
+
+func (r *Room) DisconnectClient(participantId string) {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+
+	client, ok := r.clients.Get(participantId)
+
+	if !ok {
+		return
+	}
+
+	client.WebSocketWriter.Close()
 }
 
 // SendMessageToClient is intended to handle the event when a participant
