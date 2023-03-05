@@ -82,3 +82,7 @@ func (c Connection) WriteJSON(message interface{}) error {
 
 	return writer.writer.WriteJSON(message)
 }
+
+func (c *Connection) Disconnect() {
+	c.state = NewDisconnectedConnection()
+}

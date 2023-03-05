@@ -20,6 +20,8 @@ type ParticipantState struct {
 // Represents a single participant, not as far as the problem domain, but as a
 // client in the call.
 type Client struct {
+	// TODO: perhaps Connection should be read-only
+
 	// The WebSocket writer is used to send messages to the client. This exists
 	// to prevent race conditions when sending messages to the client. A race
 	// condition will either result in the

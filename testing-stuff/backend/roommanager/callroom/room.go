@@ -55,7 +55,7 @@ func (r *Room) DisconnectClient(participantId string) {
 		return
 	}
 
-	client.WebSocketWriter.Close()
+	client.Connection.Disconnect()
 }
 
 // SendMessageToClient is intended to handle the event when a participant
@@ -74,7 +74,7 @@ func (r Room) SendMessageToClient(
 		return false, nil
 	}
 
-	err := participant.WebSocketWriter.WriteJSON(
+	err := participant.Connection.WriteJSON(
 		servermessages.CreateMessageToParticipant(fromParticipantId, message.Data),
 	)
 	if err != nil {
