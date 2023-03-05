@@ -7,6 +7,7 @@ import (
 	"backend/pairmap"
 	"backend/slice"
 	"backend/sortedmap"
+	"errors"
 	"fmt"
 	"log"
 	"sync"
@@ -59,6 +60,13 @@ func (r *Room) DisconnectClient(participantId string) {
 	client.Connection.Disconnect()
 }
 
+func idempotentSend(conn connectionstate.Connection, message interface{}) {
+	writer, ok := conn.State().(connectionstate.Connected)
+	if ok {
+		writer.WriteJSON(message)
+	}
+}
+
 // TODO: perhaps return a more detailed message to the original sender as to
 // why their message was not sent
 
@@ -81,21 +89,22 @@ func (r Room) SendMessageToClient(
 	// Yeah, let's just send rationale for failure to deliver to the sender
 	// from this function, rather than from any of the parent functions
 
+	sender, ok := r.clients.Get(fromParticipantId)
+
 	switch v := participant.Connection.State().(type) {
-	case connectionstate.Authenticating:
+	case connectionstate.Connecting:
+		if ok {
+			idempotentSend(sender.Connection, servermessages.CreateFailedToDeliverMessage(servermessages.CreateParticipantAuthenticatingMessage()))
+		}
 	case connectionstate.Connected:
-
+		return v.WriteJSON(
+			servermessages.CreateMessageToParticipant(fromParticipantId, message.Data),
+		)
 	case connectionstate.Disconnected:
+
 	}
 
-	err := participant.Connection.WriteJSON(
-		servermessages.CreateMessageToParticipant(fromParticipantId, message.Data),
-	)
-
-	if err != nil {
-		return false, err
-	}
-	return nil
+	return errors.New("unknown connection state")
 }
 
 // Size returns the number of clients in the room

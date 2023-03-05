@@ -8,8 +8,8 @@ const (
 	DisconnectedState   = "DISCONNECTED"
 )
 
-// Authenticating is the state when the connection is being authenticated
-type Authenticating struct{}
+// Connecting is the state when the connection is being authenticated
+type Connecting struct{}
 
 // Connected is the state when the connection is connected, and also gives us
 // access to methods for sending messages to the client
@@ -27,7 +27,10 @@ func (c Connected) WriteJSON(message interface{}) error {
 	return c.writer.WriteJSON(message)
 }
 
-// Disconnected is the state when the connection is disconnected
+// TODO: is a separate disconnected status even needed?
+
+// Disconnected is the state when the connection is disconnected, and is slated
+// to be removed from the room
 type Disconnected struct{}
 
 // Connection is just a safe connection object that can be used to send messages
@@ -38,7 +41,7 @@ type Connection struct {
 // NewAuthenticatingConnection creates a new connection in the authenticating
 // state
 func NewAuthenticatingConnection() Connection {
-	return Connection{state: Authenticating{}}
+	return Connection{state: Connecting{}}
 }
 
 // NewConnectedConnection creates a new connection in the connected state

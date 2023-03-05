@@ -20,8 +20,6 @@ type ParticipantState struct {
 // Represents a single participant, not as far as the problem domain, but as a
 // client in the call.
 type Client struct {
-	// TODO: perhaps Connection should be read-only
-
 	// The WebSocket writer is used to send messages to the client. This exists
 	// to prevent race conditions when sending messages to the client. A race
 	// condition will either result in the
@@ -40,7 +38,7 @@ var _ json.Marshaler = Client{}
 // and then the room is re-created, the participants that were in the room
 // before the crash will be re-inserted into the room, but they will not be
 // connected to the server.
-func (c Client) ConnectionStatus() string {
+func (c Client) ConnectionStatus() any {
 	return c.Connection.State()
 }
 
