@@ -46,7 +46,7 @@ type ParticipantAuthenticating struct {
 	ParticipantID string `json:"participantId"`
 }
 
-func CreateParticipantConnecting(participantID string) MessageWithData {
+func CreateParticipantConnectingMessage(participantID string) MessageWithData {
 	return MessageWithData{
 		Type: "PARTICIPANT_CONNECTING",
 		Data: ParticipantAuthenticating{

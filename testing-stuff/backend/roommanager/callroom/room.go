@@ -94,7 +94,13 @@ func (r Room) SendMessageToClient(
 	switch v := participant.Connection.State().(type) {
 	case connectionstate.Connecting:
 		if ok {
-			idempotentSend(sender.Connection, servermessages.CreateFailedToDeliverMessage(servermessages.CreateParticipantAuthenticatingMessage()))
+			idempotentSend(
+				sender.Connection,
+				servermessages.CreateFailedToDeliverMessage(
+					servermessages.CreateParticipantConnectingMessage(message.To),
+					message.ID,
+				),
+			)
 		}
 	case connectionstate.Connected:
 		return v.WriteJSON(
