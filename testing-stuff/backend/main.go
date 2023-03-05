@@ -168,10 +168,7 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 
 		switch v := m.(type) {
 		case clientmessages.MessageToParticipant:
-			sent, err := rooms.SendMessageToParticipant(roomId, clientId, v)
-			if !sent {
-				log.Println("Attempted to send message to a participant that does not exist")
-			}
+			err := rooms.SendMessageToParticipant(roomId, clientId, v)
 			if err != nil {
 				log.Println("Error sending message to participant: ", err.Error())
 				b, err := json.Marshal(servermessages.CreateClientError(servermessages.ErrorResponse{

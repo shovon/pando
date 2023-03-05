@@ -27,7 +27,7 @@ type RoomNoExist struct {
 func (r *RoomManager) SendMessageToParticipant(
 	roomId, fromParticipantId string,
 	message clientmessages.MessageToParticipant,
-) (any, error) {
+) error {
 	r.lock.RLock()
 	defer r.lock.RUnlock()
 
@@ -35,7 +35,7 @@ func (r *RoomManager) SendMessageToParticipant(
 	if !ok {
 		// TODO: be specific about the error. Notify the client code that the reason
 		//   why sending failed is because the room doesn't exist
-		return nil, nil
+		return nil
 	}
 
 	return room.SendMessageToClient(message, fromParticipantId)

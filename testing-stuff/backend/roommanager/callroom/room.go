@@ -1,6 +1,7 @@
 package callroom
 
 import (
+	"backend/connectionstate"
 	"backend/messages/clientmessages"
 	"backend/messages/servermessages"
 	"backend/pairmap"
@@ -68,22 +69,33 @@ func (r *Room) DisconnectClient(participantId string) {
 func (r Room) SendMessageToClient(
 	message clientmessages.MessageToParticipant,
 	fromParticipantId string,
-) (bool, error) {
+) error {
 	r.lock.RLock()
 	defer r.lock.RUnlock()
 
 	participant, ok := r.clients.Get(message.To)
 	if !ok {
-		return false, nil
+		return nil
+	}
+
+	// Yeah, let's just send rationale for failure to deliver to the sender
+	// from this function, rather than from any of the parent functions
+
+	switch v := participant.Connection.State().(type) {
+	case connectionstate.Authenticating:
+	case connectionstate.Connected:
+
+	case connectionstate.Disconnected:
 	}
 
 	err := participant.Connection.WriteJSON(
 		servermessages.CreateMessageToParticipant(fromParticipantId, message.Data),
 	)
+
 	if err != nil {
 		return false, err
 	}
-	return true, nil
+	return nil
 }
 
 // Size returns the number of clients in the room

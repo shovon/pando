@@ -17,6 +17,16 @@ type Connected struct {
 	writer writer.Writer
 }
 
+var _ writer.Writer = Connected{}
+
+func (c Connected) Write(message []byte) error {
+	return c.writer.Write(message)
+}
+
+func (c Connected) WriteJSON(message interface{}) error {
+	return c.writer.WriteJSON(message)
+}
+
 // Disconnected is the state when the connection is disconnected
 type Disconnected struct{}
 
@@ -42,17 +52,8 @@ func NewDisconnectedConnection() Connection {
 }
 
 // State returns the state of the connection
-func (c Connection) State() string {
-	switch c.state.(type) {
-	case Authenticating:
-		return AuthenticatingState
-	case Connected:
-		return ConnectedState
-	case Disconnected:
-		return DisconnectedState
-	}
-
-	panic("Unknown connection state")
+func (c Connection) State() any {
+	return c.state
 }
 
 func (c *Connection) Disconnect() {
