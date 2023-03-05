@@ -183,6 +183,7 @@ export class Room {
 				new Participant(
 					this.getMessageEventsFromParticipant(id),
 					(message: any) => {
+						// TODO: the sender should be a little bit more sophisticated
 						this.session.send(
 							JSON.stringify({
 								type: "MESSAGE_TO_PARTICIPANT",
