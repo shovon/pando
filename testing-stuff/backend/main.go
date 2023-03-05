@@ -82,7 +82,17 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 	// TODO: maybe there should be a point where the participant failing to
 	// provide a name should be considered a failure and the participant should
 	// be kicked out of the room
+
+	attempts := 0
+
 	for {
+		if attempts >= 10 {
+			c.WriteJSON(servermessages.CreateClientError(servermessages.ErrorResponse{
+				Title: "Too many failed attempts at providing a name closing",
+			}))
+			return
+		}
+
 		event, ok := <-messageChannel
 
 		if !ok {
@@ -100,12 +110,17 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 			n, err := clientmessages.ParseParticipantName(message.Data)
 			if err != nil {
 				log.Println("Error parsing participant name: ", err.Error())
+				c.WriteJSON(servermessages.CreateClientError(servermessages.ErrorResponse{
+					Title: "Expected a string for the name",
+				}))
 			} else {
 				name = n
 				log.Println("Got name:", name)
 				break
 			}
 		}
+
+		attempts++
 	}
 
 	// Just something to ensure that there are not thread safety issues
@@ -120,6 +135,9 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 			Name            string
 		}{WebSocketWriter: writer, Name: name},
 	)
+
+	log.Println("Participant left the room")
+	defer rooms.RemoveParticipant(roomId, clientId)
 
 	for {
 		log.Println("Waiting for next message")
@@ -164,9 +182,6 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-
-	log.Println("Participant left the room")
-	rooms.RemoveParticipant(roomId, clientId)
 }
 
 func handleLeaveRoom(w http.ResponseWriter, r *http.Request) {

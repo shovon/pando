@@ -58,6 +58,9 @@ func (r *Room) DisconnectClient(participantId string) {
 	client.Connection.Disconnect()
 }
 
+// TODO: perhaps return a more detailed message to the original sender as to
+// why their message was not sent
+
 // SendMessageToClient is intended to handle the event when a participant
 // intends to send a direct message to another participant.
 //

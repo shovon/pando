@@ -27,8 +27,6 @@ type Connection struct {
 	state any
 }
 
-var _ writer.Writer = Connection{}
-
 // NewAuthenticatingConnection creates a new connection in the authenticating
 // state
 func NewAuthenticatingConnection() Connection {
@@ -57,30 +55,6 @@ func (c Connection) State() string {
 	}
 
 	panic("Unknown connection state")
-}
-
-// Write writes a message to the connection
-func (c Connection) Write(message []byte) error {
-	writer, ok := c.state.(Connected)
-
-	if !ok {
-		// TODO: determine whether an unconnected state should be a no-op
-		return nil
-	}
-
-	return writer.writer.Write(message)
-}
-
-// WriteJSON writes a JSON message to the connection
-func (c Connection) WriteJSON(message interface{}) error {
-	writer, ok := c.state.(Connected)
-
-	if !ok {
-		// TOOD: determine whether an unconnected state should be a no-op
-		return nil
-	}
-
-	return writer.writer.WriteJSON(message)
 }
 
 func (c *Connection) Disconnect() {
