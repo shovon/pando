@@ -1,6 +1,7 @@
 package roommanager
 
 import (
+	"backend/connectionstate"
 	"backend/messages/clientmessages"
 	"backend/roommanager/callroom"
 	"backend/ws"
@@ -53,8 +54,8 @@ func (r *RoomManager) InsertParticipant(
 	room.InsertClient(
 		participantId,
 		callroom.Client{
-			WebSocketWriter: participant.WebSocketWriter,
-			Participant:     callroom.ParticipantState{Name: participant.Name},
+			Connection:  connectionstate.NewConnectedConnection(participant.WebSocketWriter),
+			Participant: callroom.ParticipantState{Name: participant.Name},
 		},
 	)
 }
