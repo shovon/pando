@@ -189,6 +189,7 @@ export class Room {
 								data: {
 									to: id,
 									data: message,
+									id: "123", // TODO: generate a unique id
 								},
 							})
 						);
