@@ -46,8 +46,13 @@ type ParticipantAuthenticating struct {
 	ParticipantID string `json:"participantId"`
 }
 
-type CreateParticipantAuthenticating(participantID string) MessageWithData {
-
+func CreateParticipantConnecting(participantID string) MessageWithData {
+	return MessageWithData{
+		Type: "PARTICIPANT_CONNECTING",
+		Data: ParticipantAuthenticating{
+			ParticipantID: participantID,
+		},
+	}
 }
 
 // CreateClientError creates a client error message, in order to notify the
