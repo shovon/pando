@@ -5,6 +5,12 @@ import (
 	"encoding/json"
 )
 
+// TODO: having all server messages in here is just stupid.
+//
+//   Refactoring is needed to standardize the concept of a type/data message,
+//   while still empowering domain models to send messages without relying on
+//   this module. Again inversion of control is quite important
+
 type MessageWithData struct {
 	Type string      `json:"type"`
 	Data interface{} `json:"data"`
@@ -93,5 +99,12 @@ func CreateRoomStateMessage(room RoomState) MessageWithData {
 	return MessageWithData{
 		Type: "ROOM_STATE",
 		Data: room,
+	}
+}
+
+func CreateSessionTokenMessage(token string) MessageWithData {
+	return MessageWithData{
+		Type: "SESSION_TOKEN",
+		Data: token,
 	}
 }

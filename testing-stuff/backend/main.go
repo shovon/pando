@@ -135,6 +135,21 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 	// Just something to ensure that there are not thread safety issues
 	writer := ws.NewThreadSafeWriter(c)
 
+	token, err := generateJWT(clientId, roomId)
+	if err != nil {
+		log.Println("Error generating JWT: ", err.Error())
+		c.WriteJSON(
+			servermessages.CreateServerError(
+				servermessages.ErrorResponse{
+					Title: "Internal server error: failed to generate session token",
+				},
+			),
+		)
+		return
+	}
+
+	writer.WriteJSON(servermessages.CreateSessionTokenMessage(token))
+
 	// Insert the participant into the room
 	rooms.InsertParticipant(
 		roomId,

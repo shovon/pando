@@ -7,6 +7,8 @@ import (
 
 // ParticipantState is the state of a participant
 type ParticipantState struct {
+	// TODO: a lot of this stuff can easily be soft-coded
+
 	// Name is the name of the participant
 	Name string `json:"name"`
 
@@ -20,10 +22,14 @@ type ParticipantState struct {
 // Represents a single participant, not as far as the problem domain, but as a
 // client in the call.
 type Client struct {
-	// The WebSocket writer is used to send messages to the client. This exists
-	// to prevent race conditions when sending messages to the client. A race
-	// condition will either result in the
+	// Connection is the WebSocket writer is used to send messages to the client.
+	// This exists to prevent race conditions when sending messages to the client.
+	// A race condition will either result in the
 	Connection connectionstate.Connection
+
+	// SessionToken is the token for some asynchronous/stateless authenticated
+	// stuff
+	SessionToken string
 
 	// Participant is the metadata associated with the participant
 	Participant ParticipantState
