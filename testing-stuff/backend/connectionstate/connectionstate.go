@@ -1,23 +1,31 @@
 package connectionstate
 
-import "backend/writer"
+import (
+	"backend/writer"
+	"io"
+)
 
 const (
-	AuthenticatingState = "AUTHENTICATING"
-	ConnectedState      = "CONNECTED"
-	DisconnectedState   = "DISCONNECTED"
+	ConnectingState = "CONNECTING"
+	ConnectedState  = "CONNECTED"
 )
 
 // Connecting is the state when the connection is being authenticated
 type Connecting struct{}
 
+type CloserWriter interface {
+	io.Closer
+	writer.Writer
+}
+
 // Connected is the state when the connection is connected, and also gives us
 // access to methods for sending messages to the client
 type Connected struct {
-	writer writer.Writer
+	writer CloserWriter
 }
 
 var _ writer.Writer = Connected{}
+var _ io.Closer = Connected{}
 
 func (c Connected) Write(message []byte) error {
 	return c.writer.Write(message)
@@ -27,20 +35,16 @@ func (c Connected) WriteJSON(message interface{}) error {
 	return c.writer.WriteJSON(message)
 }
 
-// TODO: is a separate disconnected status even needed?
-
-// Disconnected is the state when the connection is disconnected, and is slated
-// to be removed from the room
-type Disconnected struct{}
+func (c Connected) Close() error {
+	return c.writer.Close()
+}
 
 func ConnectionStatus(state any) string {
 	switch state.(type) {
 	case Connecting:
-		return AuthenticatingState
+		return ConnectingState
 	case Connected:
 		return ConnectedState
-	case Disconnected:
-		return DisconnectedState
 	default:
 		return "UNKNOWN"
 	}
@@ -58,20 +62,11 @@ func NewAuthenticatingConnection() Connection {
 }
 
 // NewConnectedConnection creates a new connection in the connected state
-func NewConnectedConnection(w writer.Writer) Connection {
+func NewConnectedConnection(w CloserWriter) Connection {
 	return Connection{state: Connected{writer: w}}
-}
-
-// NewDisconnectedConnection creates a new connection in the disconnected state
-func NewDisconnectedConnection() Connection {
-	return Connection{state: Disconnected{}}
 }
 
 // State returns the state of the connection
 func (c Connection) State() any {
 	return c.state
-}
-
-func (c *Connection) Disconnect() {
-	c.state = NewDisconnectedConnection()
 }

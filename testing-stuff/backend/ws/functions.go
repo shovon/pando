@@ -58,6 +58,7 @@ func ReadLoop(c *websocket.Conn) <-chan []byte {
 }
 
 func writeTextMessage(c *websocket.Conn, m []byte) error {
+
 	err := setWriteDeadline(c)
 	if err != nil {
 		return err

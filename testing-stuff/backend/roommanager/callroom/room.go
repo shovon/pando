@@ -56,6 +56,7 @@ func (r *Room) DisconnectClient(participantId string) {
 	if !ok {
 		return
 	}
+
 }
 
 func idempotentSend(conn connectionstate.Connection, message interface{}) error {
