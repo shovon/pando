@@ -39,6 +39,10 @@ type Client struct {
 
 var _ json.Marshaler = Client{}
 
+// Close closes the connection to the client.
+//
+// If the connection was already closed, then subsequent calls to this function
+// does absolutely nothing.
 func (c *Client) Close() error {
 	con, ok := c.Connection.State().(connectionstate.Connected)
 	if !ok {
@@ -60,13 +64,13 @@ func (c Client) ConnectionState() any {
 	return c.Connection.State()
 }
 
-type ClientJSON struct {
+type clientJSON struct {
 	ParticipantState ParticipantData `json:"data"`
 	ConnectionState  string          `json:"connection_state"`
 }
 
 func (c Client) MarshalJSON() ([]byte, error) {
-	return json.Marshal(ClientJSON{
+	return json.Marshal(clientJSON{
 		ParticipantState: c.Participant,
 		ConnectionState:  connectionstate.ConnectionStatus(c.Connection.State()),
 	})
