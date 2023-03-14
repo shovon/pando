@@ -78,7 +78,7 @@ func parseJwt(j string) (maybe.Maybe[RoomAndClientID], error) {
 			return maybe.Nothing[RoomAndClientID](), nil
 		}
 
-		return maybe.Something[RoomAndClientID](
+		return maybe.Something(
 			RoomAndClientID{ClientID: clientId, RoomID: roomId},
 		), nil
 	} else {
