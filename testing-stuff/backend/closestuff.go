@@ -2,6 +2,7 @@ package main
 
 import (
 	"backend/config"
+	"backend/maybe"
 	"backend/nextint"
 	"crypto/sha256"
 	"encoding/binary"
@@ -38,12 +39,18 @@ func generateJWT(clientId, roomId string) (string, error) {
 		"roomId":   roomId,
 		"jti":      hashString,
 		"iat":      iat,
+		// NOTE: we don't need an aud field
 	})
 
 	return token.SignedString(config.GetHS256Key())
 }
 
-func parseJwt(j string) (bool, error) {
+type RoomAndClientID struct {
+	RoomID   string
+	ClientID string
+}
+
+func parseJwt(j string) (maybe.Maybe[RoomAndClientID], error) {
 	token, err := jwt.Parse(j, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -54,20 +61,26 @@ func parseJwt(j string) (bool, error) {
 	})
 
 	if err != nil {
-		return false, err
+		return maybe.Nothing[RoomAndClientID](), err
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		if claims["clientId"] != clientId {
-			return false, nil
+		clientId, ok := claims["clientId"].(string)
+		if !ok {
+			// TODO: things need to be a lot more detailed as to why they are failing
+			return maybe.Nothing[RoomAndClientID](), nil
 		}
 
-		if claims["roomId"] != roomId {
-			return false, nil
+		roomId, ok := claims["roomId"].(string)
+		if !ok {
+			// TODO: things need to be a lot more details as to why they are failing
+			return maybe.Nothing[RoomAndClientID](), nil
 		}
 
-		return true, nil
+		return maybe.Something[RoomAndClientID](
+			RoomAndClientID{ClientID: clientId, RoomID: roomId},
+		), nil
 	} else {
-		return false, nil
+		return maybe.Nothing[RoomAndClientID](), nil
 	}
 }

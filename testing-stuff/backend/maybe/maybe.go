@@ -21,6 +21,6 @@ func Something[T any](value T) Maybe[T] {
 }
 
 // Nothing returns a Maybe with no value
-func Nothing() Maybe[any] {
-	return Maybe[any]{hasValue: false}
+func Nothing[T any]() Maybe[T] {
+	return Maybe[T]{hasValue: false}
 }

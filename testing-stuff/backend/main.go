@@ -8,6 +8,7 @@ import (
 	"backend/ws"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
@@ -196,23 +197,28 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleLeaveRoom(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-
-	roomId, ok := params["roomId"]
-	if !ok {
-		log.Print("Server error: no room ID provided")
-		w.WriteHeader(http.StatusInternalServerError)
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Println("Error reading body: ", err.Error())
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	participantId, ok := params["participantId"]
-	if !ok {
-		log.Print("Server error: no participant ID provided")
-		w.WriteHeader(http.StatusInternalServerError)
+	jwt, err := parseJwt(string(b))
+	if err != nil {
+		log.Println("Error reading body: ", err.Error())
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	rooms.RemoveParticipant(roomId, participantId)
+	rc, ok := jwt.Get()
+	if !ok {
+		log.Println("Error reading body: ", err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	rooms.RemoveParticipant(rc.RoomID, rc.ClientID)
 }
 
 func main() {
