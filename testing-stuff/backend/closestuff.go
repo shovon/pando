@@ -39,7 +39,8 @@ func generateJWT(clientId, roomId string) (string, error) {
 		"roomId":   roomId,
 		"jti":      hashString,
 		"iat":      iat,
-		"aud":      "demo-room-backend",
+		// TODO: consider softcoding the aud field
+		"aud": "demo-room-backend",
 	})
 
 	return token.SignedString(config.GetHS256Key())
