@@ -51,12 +51,20 @@ func (r *Room) DisconnectClient(participantId string) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
-	// client, ok := r.clients.Get(participantId)
+	client, ok := r.clients.Get(participantId)
 
-	// if !ok {
-	// 	return
-	// }
+	if !ok {
+		return
+	}
 
+	state, ok := client.ConnectionState().(connectionstate.Connected)
+	if ok {
+		if err := state.Close(); err != nil {
+			log.Println("failed to close connection:", err)
+		}
+	}
+
+	r.clients.Delete(participantId)
 }
 
 func idempotentSend(conn connectionstate.Connection, message interface{}) error {

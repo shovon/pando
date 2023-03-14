@@ -25,6 +25,7 @@ func NewThreadSafeWriter(c *websocket.Conn) ThreadSafeWriter {
 	return ThreadSafeWriter{lock: &sync.Mutex{}, c: c}
 }
 
+// Close closes the writer
 func (t *ThreadSafeWriter) Close() error {
 	t.lock.Lock()
 	defer t.lock.Unlock()
