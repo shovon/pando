@@ -6,12 +6,12 @@ import (
 )
 
 const (
-	ConnectingState = "CONNECTING"
-	ConnectedState  = "CONNECTED"
+	DisconnectedState = "DISCONNECTED"
+	ConnectedState    = "CONNECTED"
 )
 
-// Connecting is the state when the connection is being authenticated
-type Connecting struct{}
+// Disconnected is the state when the connection is being authenticated
+type Disconnected struct{}
 
 type CloserWriter struct {
 	io.Closer
@@ -41,8 +41,8 @@ func (c Connected) WriteJSON(message interface{}) error {
 
 func ConnectionStatus(state any) string {
 	switch state.(type) {
-	case Connecting:
-		return ConnectingState
+	case Disconnected:
+		return DisconnectedState
 	case Connected:
 		return ConnectedState
 	default:
@@ -55,14 +55,14 @@ type Connection struct {
 	state any
 }
 
-// NewConnectingStatus creates a new connection in the authenticating
+// NewDisconnectedStatus creates a new connection in the authenticating
 // state
-func NewConnectingStatus() Connection {
-	return Connection{state: Connecting{}}
+func NewDisconnectedStatus() Connection {
+	return Connection{state: Disconnected{}}
 }
 
 // NewConnectedStatus creates a new connection in the connected state
-func NewConnectedStatus(w writer.Writer) Connection {
+func NewConnectedStatus(w CloserWriter) Connection {
 	return Connection{state: Connected{writer: w}}
 }
 

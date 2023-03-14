@@ -99,7 +99,7 @@ func (r Room) SendMessageToClient(
 	sender, ok := r.clients.Get(fromParticipantId)
 
 	switch v := participant.Connection.State().(type) {
-	case connectionstate.Connecting:
+	case connectionstate.Disconnected:
 		if ok {
 			err := idempotentSend(
 				sender.Connection,
