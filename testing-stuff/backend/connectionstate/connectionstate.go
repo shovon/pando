@@ -39,6 +39,8 @@ func (c Connected) WriteJSON(message interface{}) error {
 	return c.writer.WriteJSON(message)
 }
 
+// ConnectionStatus infers the connection status given the passed-in state
+// object
 func ConnectionStatus(state any) string {
 	switch state.(type) {
 	case Disconnected:
