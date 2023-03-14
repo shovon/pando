@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 )
 
-// ParticipantState is the state of a participant
-type ParticipantState struct {
+// ParticipantData is the state of a participant
+type ParticipantData struct {
 	// TODO: a lot of this stuff can easily be soft-coded. We don't need a
 	//   separate `HasVideo` and `HasAudio` field. We can instead have an
 	//   associative blob of data that represents stuff related to audio/video
@@ -34,7 +34,7 @@ type Client struct {
 	SessionToken string
 
 	// Participant is the metadata associated with the participant
-	Participant ParticipantState
+	Participant ParticipantData
 }
 
 var _ json.Marshaler = Client{}
@@ -45,6 +45,7 @@ func (c *Client) Close() error {
 		// If already disconnected, it's a no-op
 		return nil
 	}
+	c.Connection = connectionstate.NewDisconnectedStatus()
 	return con.Close()
 }
 
@@ -59,20 +60,14 @@ func (c Client) ConnectionState() any {
 	return c.Connection.State()
 }
 
-type ConnectionState struct {
-	Status string `json:"status"`
-}
-
 type ClientJSON struct {
-	ParticipantState ParticipantState `json:"participant"`
-	ConnectionState  ConnectionState  `json:"connection"`
+	ParticipantState ParticipantData `json:"data"`
+	ConnectionState  string          `json:"connection_state"`
 }
 
 func (c Client) MarshalJSON() ([]byte, error) {
 	return json.Marshal(ClientJSON{
 		ParticipantState: c.Participant,
-		ConnectionState: ConnectionState{
-			Status: connectionstate.ConnectionStatus(c.Connection.State()),
-		},
+		ConnectionState:  connectionstate.ConnectionStatus(c.Connection.State()),
 	})
 }

@@ -128,7 +128,7 @@ func (r Room) Size() int {
 }
 
 type DetailedParticipantState struct {
-	ParticipantState
+	ParticipantData
 
 	ConnectionStatus string `json:"connectionStatus"`
 }
@@ -140,7 +140,7 @@ func (r Room) getParticipantsState() []DetailedParticipantState {
 	participants := make([]DetailedParticipantState, r.clients.Len())
 	for i, participant := range r.clients.Values() {
 		participants[i] = DetailedParticipantState{
-			ParticipantState: participant.Participant,
+			ParticipantData:  participant.Participant,
 			ConnectionStatus: connectionstate.ConnectionStatus(participant.Connection.State()),
 		}
 	}
