@@ -13,7 +13,7 @@ const (
 // Disconnected is the state when the connection is being authenticated
 type Disconnected struct{}
 
-type CloserWriter struct {
+type CloserWriter interface {
 	io.Closer
 	writer.Writer
 }
