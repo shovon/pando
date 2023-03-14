@@ -38,6 +38,7 @@ type Client struct {
 }
 
 var _ json.Marshaler = Client{}
+var _ json.Unmarshaler = &Client{}
 
 // Close closes the connection to the client.
 //
@@ -74,4 +75,14 @@ func (c Client) MarshalJSON() ([]byte, error) {
 		ParticipantState: c.Participant,
 		ConnectionState:  connectionstate.ConnectionStatus(c.Connection.State()),
 	})
+}
+
+func (c *Client) UnmarshalJSON(data []byte) error {
+	var client clientJSON
+	if err := json.Unmarshal(data, &client); err != nil {
+		return err
+	}
+	c.Participant = client.ParticipantState
+	c.Connection = connectionstate.NewDisconnectedStatus()
+	return nil
 }
