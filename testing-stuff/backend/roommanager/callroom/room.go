@@ -63,8 +63,6 @@ func (r *Room) DisconnectClient(participantId string) {
 			log.Println("failed to close connection:", err)
 		}
 	}
-
-	r.clients.Delete(participantId)
 }
 
 func idempotentSend(conn connectionstate.Connection, message interface{}) error {

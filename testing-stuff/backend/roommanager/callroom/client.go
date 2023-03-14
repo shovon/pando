@@ -7,7 +7,9 @@ import (
 
 // ParticipantState is the state of a participant
 type ParticipantState struct {
-	// TODO: a lot of this stuff can easily be soft-coded
+	// TODO: a lot of this stuff can easily be soft-coded. We don't need a
+	//   separate `HasVideo` and `HasAudio` field. We can instead have an
+	//   associative blob of data that represents stuff related to audio/video
 
 	// Name is the name of the participant
 	Name string `json:"name"`
@@ -57,6 +59,20 @@ func (c Client) ConnectionState() any {
 	return c.Connection.State()
 }
 
+type ConnectionState struct {
+	Status string `json:"status"`
+}
+
+type ClientJSON struct {
+	ParticipantState ParticipantState `json:"participant"`
+	ConnectionState  ConnectionState  `json:"connection"`
+}
+
 func (c Client) MarshalJSON() ([]byte, error) {
-	return json.Marshal(c.Participant)
+	return json.Marshal(ClientJSON{
+		ParticipantState: c.Participant,
+		ConnectionState: ConnectionState{
+			Status: connectionstate.ConnectionStatus(c.Connection.State()),
+		},
+	})
 }
