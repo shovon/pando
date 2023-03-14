@@ -96,7 +96,7 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 	for {
 		if attempts >= 10 {
 			c.WriteJSON(servermessages.CreateClientError(servermessages.ErrorResponse{
-				Title: "Too many failed attempts at providing a name closing",
+				Title: "Too many failed attempts at providing a name. Closing",
 			}))
 			return
 		}
@@ -200,13 +200,15 @@ func handleLeaveRoom(w http.ResponseWriter, r *http.Request) {
 
 	roomId, ok := params["roomId"]
 	if !ok {
-		w.WriteHeader(http.StatusBadRequest)
+		log.Print("Server error: no room ID provided")
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	participantId, ok := params["participantId"]
 	if !ok {
-		w.WriteHeader(http.StatusBadRequest)
+		log.Print("Server error: no participant ID provided")
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
