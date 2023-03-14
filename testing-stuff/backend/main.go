@@ -219,7 +219,7 @@ func main() {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/room/{id}", handleRoom)
-	r.HandleFunc("/leave-room/{roomId}/{participantId}", handleLeaveRoom).Methods(http.MethodPost)
+	r.HandleFunc("/leave-room", handleLeaveRoom).Methods(http.MethodPost)
 
 	port := config.GetPort()
 	log.Printf("Listening on port %d", port)

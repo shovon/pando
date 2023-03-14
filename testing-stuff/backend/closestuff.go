@@ -43,7 +43,7 @@ func generateJWT(clientId, roomId string) (string, error) {
 	return token.SignedString(config.GetHS256Key())
 }
 
-func verifyJWT(clientId, roomId, j string) (bool, error) {
+func parseJwt(j string) (bool, error) {
 	token, err := jwt.Parse(j, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
