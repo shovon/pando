@@ -14,10 +14,18 @@ type MessageToParticipant struct {
 	ID   string          `json:"id"`
 }
 
+type SessionToken string
+
 type UnknownMessage json.RawMessage
 
 func ParseMessageToParticipant(message json.RawMessage) (MessageToParticipant, error) {
 	var m MessageToParticipant
+	err := json.Unmarshal(message, &m)
+	return m, err
+}
+
+func ParseSessionToken(message json.RawMessage) (SessionToken, error) {
+	var m SessionToken
 	err := json.Unmarshal(message, &m)
 	return m, err
 }
@@ -38,7 +46,7 @@ func ParseMessage(message Message) (any, error) {
 	case "ENABLE_AUDIO":
 	case "DISABLE_AUDIO":
 	case "CLOSE_CONNECTION":
-		// The participant can optionally notify to the connection has ended
+		return ParseSessionToken(message.Data)
 	}
 
 	return UnknownMessage(message.Data), nil
