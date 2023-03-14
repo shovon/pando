@@ -31,14 +31,14 @@ type Client struct {
 
 var _ json.Marshaler = Client{}
 
-// ConnectionStatus returns the connection status of the participant
+// ConnectionState returns the connection status of the participant
 //
 // This function has been created because not all participants on the call are
 // guaranteed to be connected to the server. For example, if the server crashes
 // and then the room is re-created, the participants that were in the room
 // before the crash will be re-inserted into the room, but they will not be
 // connected to the server.
-func (c Client) ConnectionStatus() any {
+func (c Client) ConnectionState() any {
 	return c.Connection.State()
 }
 

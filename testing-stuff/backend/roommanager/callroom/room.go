@@ -51,11 +51,11 @@ func (r *Room) DisconnectClient(participantId string) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
-	client, ok := r.clients.Get(participantId)
+	// client, ok := r.clients.Get(participantId)
 
-	if !ok {
-		return
-	}
+	// if !ok {
+	// 	return
+	// }
 
 }
 
@@ -110,7 +110,6 @@ func (r Room) SendMessageToClient(
 		return v.WriteJSON(
 			servermessages.CreateMessageToParticipant(fromParticipantId, message.Data),
 		)
-	case connectionstate.Disconnected:
 
 	}
 
