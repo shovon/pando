@@ -58,7 +58,7 @@ func (r *RoomManager) InsertParticipant(
 	room.InsertClient(
 		participantId,
 		callroom.Client{
-			Connection:  connectionstate.NewConnectedConnection(&participant.WebSocketWriter),
+			Connection:  connectionstate.NewConnectedStatus(&participant.WebSocketWriter),
 			Participant: callroom.ParticipantState{Name: participant.Name},
 		},
 	)

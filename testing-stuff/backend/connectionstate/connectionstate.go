@@ -13,7 +13,7 @@ const (
 // Connecting is the state when the connection is being authenticated
 type Connecting struct{}
 
-type CloserWriter interface {
+type CloserWriter struct {
 	io.Closer
 	writer.Writer
 }
@@ -24,8 +24,12 @@ type Connected struct {
 	writer CloserWriter
 }
 
-var _ writer.Writer = Connected{}
 var _ io.Closer = Connected{}
+var _ writer.Writer = Connected{}
+
+func (c Connected) Close() error {
+	return c.writer.Close()
+}
 
 func (c Connected) Write(message []byte) error {
 	return c.writer.Write(message)
@@ -33,10 +37,6 @@ func (c Connected) Write(message []byte) error {
 
 func (c Connected) WriteJSON(message interface{}) error {
 	return c.writer.WriteJSON(message)
-}
-
-func (c Connected) Close() error {
-	return c.writer.Close()
 }
 
 func ConnectionStatus(state any) string {
@@ -55,14 +55,14 @@ type Connection struct {
 	state any
 }
 
-// NewAuthenticatingConnection creates a new connection in the authenticating
+// NewConnectingStatus creates a new connection in the authenticating
 // state
-func NewAuthenticatingConnection() Connection {
+func NewConnectingStatus() Connection {
 	return Connection{state: Connecting{}}
 }
 
-// NewConnectedConnection creates a new connection in the connected state
-func NewConnectedConnection(w CloserWriter) Connection {
+// NewConnectedStatus creates a new connection in the connected state
+func NewConnectedStatus(w writer.Writer) Connection {
 	return Connection{state: Connected{writer: w}}
 }
 

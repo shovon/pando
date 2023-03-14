@@ -37,6 +37,15 @@ type Client struct {
 
 var _ json.Marshaler = Client{}
 
+func (c *Client) Close() error {
+	con, ok := c.Connection.State().(connectionstate.Connected)
+	if !ok {
+		// If already disconnected, it's a no-op
+		return nil
+	}
+	return con.Close()
+}
+
 // ConnectionState returns the connection status of the participant
 //
 // This function has been created because not all participants on the call are

@@ -160,9 +160,6 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 		}{WebSocketWriter: writer, Name: name},
 	)
 
-	log.Println("Participant left the room")
-	defer rooms.RemoveParticipant(roomId, clientId)
-
 	for {
 		log.Println("Waiting for next message")
 		event, ok := <-messageChannel
