@@ -2,7 +2,6 @@ package servermessages
 
 import (
 	"backend/keyvalue"
-	"encoding/json"
 )
 
 // TODO: having all server messages in here is just stupid.
@@ -24,26 +23,12 @@ type ErrorResponse struct {
 	Meta   interface{} `json:"meta,omitempty"`
 }
 
-type MessageToParticipant struct {
-	From string          `json:"from"`
-	Data json.RawMessage `json:"data"`
-}
-
 type ParticipantDoesNotExist struct {
 	ParticipantID string `json:"participantId"`
 }
 
 type ParticipantAuthenticating struct {
 	ParticipantID string `json:"participantId"`
-}
-
-func CreateParticipantConnectingMessage(participantID string) MessageWithData {
-	return MessageWithData{
-		Type: "PARTICIPANT_CONNECTING",
-		Data: ParticipantAuthenticating{
-			ParticipantID: participantID,
-		},
-	}
 }
 
 // CreateClientError creates a client error message, in order to notify the
@@ -60,17 +45,6 @@ func CreateServerError(err ErrorResponse) MessageWithData {
 	return MessageWithData{
 		Type: "SERVER_ERROR",
 		Data: err,
-	}
-}
-
-// CreateMessageToParticipant creates a message to be sent to a participant
-func CreateMessageToParticipant(from string, message json.RawMessage) MessageWithData {
-	return MessageWithData{
-		Type: "MESSAGE_FROM_PARTICIPANT",
-		Data: MessageToParticipant{
-			From: from,
-			Data: message,
-		},
 	}
 }
 

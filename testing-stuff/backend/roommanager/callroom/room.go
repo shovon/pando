@@ -7,6 +7,7 @@ import (
 	"backend/messages/servermessages"
 	"backend/slice"
 	"backend/sortedmap"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -24,6 +25,22 @@ type Room struct {
 // NewRoom creates a new Room instance
 func NewRoom() Room {
 	return Room{lock: &sync.RWMutex{}, clients: sortedmap.New[string, Client]()}
+}
+
+type MessageToParticipant struct {
+	From string          `json:"from"`
+	Data json.RawMessage `json:"data"`
+}
+
+// CreateMessageToParticipant creates a message to be sent to a participant
+func CreateMessageToParticipant(from string, message json.RawMessage) servermessages.MessageWithData {
+	return servermessages.MessageWithData{
+		Type: "MESSAGE_FROM_PARTICIPANT",
+		Data: MessageToParticipant{
+			From: from,
+			Data: message,
+		},
+	}
 }
 
 // InsertClient inserts a new client into the room
@@ -138,7 +155,7 @@ func (r Room) SendMessageToClient(
 	case connectionstate.Connected:
 		// TODO: this is stupid
 		return v.WriteJSON(
-			servermessages.CreateMessageToParticipant(fromParticipantId, message.Data),
+			CreateMessageToParticipant(fromParticipantId, message.Data),
 		)
 
 	}
