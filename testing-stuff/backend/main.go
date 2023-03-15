@@ -127,6 +127,7 @@ func handleRoom(w http.ResponseWriter, r *http.Request) {
 				log.Println("Got name:", name)
 				break
 			}
+		} else if message.Type == "RESTORE_STATE" {
 		}
 
 		attempts++

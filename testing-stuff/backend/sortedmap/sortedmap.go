@@ -1,7 +1,10 @@
 package sortedmap
 
 import (
+	"backend/pairmap"
 	"backend/slice"
+	"encoding/json"
+	"errors"
 	"sort"
 )
 
@@ -16,8 +19,33 @@ type IntValue[V any] struct {
 }
 
 type SortedMap[K comparable, V any] struct {
-	m          map[K]IntValue[V]
-	latesOrder int
+	m           map[K]IntValue[V]
+	latestOrder int
+}
+
+var _ json.Marshaler = SortedMap[int, any]{}
+var _ json.Unmarshaler = &SortedMap[int, any]{}
+
+func (s SortedMap[K, V]) MarshalJSON() ([]byte, error) {
+	p := slice.Map(
+		s.Pairs(),
+		func(kv KV[K, V]) pairmap.KV[
+			K,
+			V,
+		] {
+			// We're gonna need so much more as well
+			return pairmap.KV[K, V]{
+				Key:   kv.Key,
+				Value: kv.Value,
+			}
+		},
+	)
+
+	return json.Marshal(p)
+}
+
+func (s *SortedMap[K, V]) UnmarshalJSON(data []byte) error {
+	return errors.New("not yet implemented")
 }
 
 func New[K comparable, V any]() SortedMap[K, V] {
@@ -27,10 +55,10 @@ func New[K comparable, V any]() SortedMap[K, V] {
 }
 
 func (s *SortedMap[K, V]) Set(key K, value V) {
-	s.latesOrder++
+	s.latestOrder++
 	s.m[key] = IntValue[V]{
 		value: value,
-		order: s.latesOrder,
+		order: s.latestOrder,
 	}
 }
 
@@ -84,8 +112,8 @@ func (s *SortedMap[K, V]) Clear() {
 
 func (s SortedMap[K, V]) Copy() SortedMap[K, V] {
 	return SortedMap[K, V]{
-		m:          s.m,
-		latesOrder: s.latesOrder,
+		m:           s.m,
+		latestOrder: s.latestOrder,
 	}
 }
 

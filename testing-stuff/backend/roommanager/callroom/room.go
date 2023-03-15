@@ -60,7 +60,10 @@ func (r *Room) DisconnectClient(participantId string) {
 	client.Close()
 }
 
-func idempotentSend(conn connectionstate.Connection, message interface{}) error {
+func idempotentSend(
+	conn connectionstate.Connection,
+	message interface{},
+) error {
 	writer, ok := conn.State().(connectionstate.Connected)
 	if ok {
 		return writer.WriteJSON(message)
@@ -162,7 +165,7 @@ func (r Room) getRoomState() servermessages.RoomState {
 			// We're gonna need so much more as well
 			return pairmap.KV[string, any]{
 				Key:   kv.Key,
-				Value: kv.Value.Participant,
+				Value: kv.Value,
 			}
 		},
 	)

@@ -36,10 +36,17 @@ func ParseParticipantName(message json.RawMessage) (string, error) {
 	return name, err
 }
 
+const (
+	MessageToParticipantType = "MESSAGE_TO_PARTICIPANT"
+	SetNameType              = "SET_NAME"
+)
+
 func ParseMessage(message Message) (any, error) {
 	switch message.Type {
 	case "MESSAGE_TO_PARTICIPANT":
 		return ParseMessageToParticipant(message.Data)
+	case "SET_NAME":
+		return ParseParticipantName(message.Data)
 	case "BROADCAST_MESSAGE":
 	case "ENABLE_VIDEO":
 	case "DISABLE_VIDEO":
@@ -47,6 +54,7 @@ func ParseMessage(message Message) (any, error) {
 	case "DISABLE_AUDIO":
 	case "CLOSE_CONNECTION":
 		return ParseSessionToken(message.Data)
+	case "RESTORE_STATE":
 	}
 
 	return UnknownMessage(message.Data), nil
