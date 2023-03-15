@@ -72,6 +72,12 @@ func idempotentSend(
 	return nil
 }
 
+func createFailedToDeliverMessage(m servermessages.MessageWithData, messageID string) servermessages.MessageWithData {
+	return servermessages.MessageWithData{
+		Type: "FAILED_TO_DELIVER_MESSAGE",
+	}
+}
+
 // TODO: perhaps return a more detailed message to the original sender as to
 // why their message was not sent
 
@@ -101,7 +107,7 @@ func (r Room) SendMessageToClient(
 		if ok {
 			err := idempotentSend(
 				sender.Connection,
-				servermessages.CreateFailedToDeliverMessage(
+				createFailedToDeliverMessage(
 					servermessages.CreateParticipantConnectingMessage(message.To),
 					message.ID,
 				),

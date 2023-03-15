@@ -29,12 +29,6 @@ type MessageToParticipant struct {
 	Data json.RawMessage `json:"data"`
 }
 
-func CreateFailedToDeliverMessage(m MessageWithData, messageID string) MessageWithData {
-	return MessageWithData{
-		Type: "FAILED_TO_DELIVER_MESSAGE",
-	}
-}
-
 type ParticipantDoesNotExist struct {
 	ParticipantID string `json:"participantId"`
 }
