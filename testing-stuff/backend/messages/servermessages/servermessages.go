@@ -1,7 +1,7 @@
 package servermessages
 
 import (
-	"backend/pairmap"
+	"backend/keyvalue"
 	"encoding/json"
 )
 
@@ -91,7 +91,7 @@ func CreateMessageToParticipant(from string, message json.RawMessage) MessageWit
 
 // RoomState is the state of a room
 type RoomState struct {
-	Participants []pairmap.KV[string, any] `json:"participants"`
+	Participants []keyvalue.KV[string, any] `json:"participants"`
 }
 
 // CreateRoomStateMessage creates a message containing the room state

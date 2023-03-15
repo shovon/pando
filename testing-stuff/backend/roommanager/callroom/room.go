@@ -2,9 +2,9 @@ package callroom
 
 import (
 	"backend/connectionstate"
+	"backend/keyvalue"
 	"backend/messages/clientmessages"
 	"backend/messages/servermessages"
-	"backend/pairmap"
 	"backend/slice"
 	"backend/sortedmap"
 	"errors"
@@ -158,12 +158,12 @@ func (r Room) GetRoomState() servermessages.RoomState {
 func (r Room) getRoomState() servermessages.RoomState {
 	p := slice.Map(
 		r.clients.Pairs(),
-		func(kv sortedmap.KV[string, Client]) pairmap.KV[
+		func(kv keyvalue.KV[string, Client]) keyvalue.KV[
 			string,
 			any,
 		] {
 			// We're gonna need so much more as well
-			return pairmap.KV[string, any]{
+			return keyvalue.KV[string, any]{
 				Key:   kv.Key,
 				Value: kv.Value,
 			}
