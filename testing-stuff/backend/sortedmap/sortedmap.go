@@ -1,17 +1,12 @@
 package sortedmap
 
 import (
-	"backend/pairmap"
+	"backend/keyvalue"
 	"backend/slice"
 	"encoding/json"
 	"errors"
 	"sort"
 )
-
-type KV[K comparable, V any] struct {
-	Key   K
-	Value V
-}
 
 type IntValue[V any] struct {
 	value V
@@ -29,12 +24,12 @@ var _ json.Unmarshaler = &SortedMap[int, any]{}
 func (s SortedMap[K, V]) MarshalJSON() ([]byte, error) {
 	p := slice.Map(
 		s.Pairs(),
-		func(kv KV[K, V]) pairmap.KV[
+		func(kv keyvalue.KV[K, V]) keyvalue.KV[
 			K,
 			V,
 		] {
 			// We're gonna need so much more as well
-			return pairmap.KV[K, V]{
+			return keyvalue.KV[K, V]{
 				Key:   kv.Key,
 				Value: kv.Value,
 			}
@@ -76,21 +71,21 @@ func (s SortedMap[K, V]) Len() int {
 }
 
 func (s SortedMap[K, V]) Keys() []K {
-	return slice.Map(s.Pairs(), func(kv KV[K, V]) K {
+	return slice.Map(s.Pairs(), func(kv keyvalue.KV[K, V]) K {
 		return kv.Key
 	})
 }
 
 func (s SortedMap[K, V]) Values() []V {
-	return slice.Map(s.Pairs(), func(kv KV[K, V]) V {
+	return slice.Map(s.Pairs(), func(kv keyvalue.KV[K, V]) V {
 		return kv.Value
 	})
 }
 
-func (s SortedMap[K, V]) Pairs() []KV[K, V] {
-	pairs := make([]KV[K, V], 0, len(s.m))
+func (s SortedMap[K, V]) Pairs() []keyvalue.KV[K, V] {
+	pairs := make([]keyvalue.KV[K, V], 0, len(s.m))
 	for key, value := range s.m {
-		pairs = append(pairs, KV[K, V]{
+		pairs = append(pairs, keyvalue.KV[K, V]{
 			Key:   key,
 			Value: value.value,
 		})
