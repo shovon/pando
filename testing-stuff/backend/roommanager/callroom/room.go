@@ -72,9 +72,21 @@ func idempotentSend(
 	return nil
 }
 
-func createFailedToDeliverMessage(m servermessages.MessageWithData, messageID string) servermessages.MessageWithData {
+func createFailedToDeliverMessage(messageID string) servermessages.MessageWithData {
 	return servermessages.MessageWithData{
 		Type: "FAILED_TO_DELIVER_MESSAGE",
+		Data: map[string]interface{}{
+			"messageId": messageID,
+		},
+	}
+}
+
+func CreateParticipantDoesNotExist(participantID string) servermessages.MessageWithData {
+	return servermessages.MessageWithData{
+		Type: "PARTICIPANT_DOES_NOT_EXIST",
+		Data: map[string]interface{}{
+			"participantId": participantID,
+		},
 	}
 }
 
@@ -92,28 +104,27 @@ func (r Room) SendMessageToClient(
 	r.lock.RLock()
 	defer r.lock.RUnlock()
 
-	participant, ok := r.clients.Get(message.To)
-	if !ok {
-		return nil
-	}
-
-	// Yeah, let's just send rationale for failure to deliver to the sender
-	// from this function, rather than from any of the parent functions
+	participant, participantExists := r.clients.Get(message.To)
 
 	sender, ok := r.clients.Get(fromParticipantId)
+
+	if !ok {
+		return errors.New("sender does not exist")
+	}
+
+	if !participantExists {
+		return idempotentSend(sender.Connection, CreateParticipantDoesNotExist(message.To))
+	}
 
 	switch v := participant.Connection.State().(type) {
 	case connectionstate.Disconnected:
 		if ok {
-			err := idempotentSend(
+			return idempotentSend(
 				sender.Connection,
 				createFailedToDeliverMessage(
-					servermessages.CreateParticipantConnectingMessage(message.To),
 					message.ID,
 				),
 			)
-
-			return err
 		}
 	case connectionstate.Connected:
 		// TODO: this is stupid

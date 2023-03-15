@@ -33,15 +33,6 @@ type ParticipantDoesNotExist struct {
 	ParticipantID string `json:"participantId"`
 }
 
-func CreateParticipantDoesNotExist(participantID string) MessageWithData {
-	return MessageWithData{
-		Type: "PARTICIPANT_DOES_NOT_EXIST",
-		Data: ParticipantDoesNotExist{
-			ParticipantID: participantID,
-		},
-	}
-}
-
 type ParticipantAuthenticating struct {
 	ParticipantID string `json:"participantId"`
 }
