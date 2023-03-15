@@ -104,6 +104,15 @@ func (r Room) SendMessageToClient(
 	r.lock.RLock()
 	defer r.lock.RUnlock()
 
+	// Several scenarios:
+	//
+	// a. if the participant does not exist, then notify the sender that the
+	//    participant does not exist
+	// b. if the participant is disconnected, then notify the sender that the
+	//    message could not be delivered
+	// c. if the participant is connected, then send the message to the
+	//    participant
+
 	participant, participantExists := r.clients.Get(message.To)
 
 	sender, ok := r.clients.Get(fromParticipantId)
