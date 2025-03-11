@@ -7,6 +7,7 @@ type Degree3Node<T> = {
 	];
 };
 
+// TODO: cache depths
 function getDepth<T>(
 	node: Degree3Node<T> | null,
 	visits: Set<Degree3Node<T>>
@@ -31,6 +32,7 @@ function getDepth<T>(
 	);
 }
 
+// TODO: cache sizes
 function getSize<T>(
 	node: Degree3Node<T> | null,
 	visits: Set<Degree3Node<T>>
@@ -54,6 +56,7 @@ function getSize<T>(
 }
 
 function insert<T>(node: Degree3Node<T>, value: T) {
+	// Check the successor spans, and find the one with the least number of nodes.
 	let minSizeIndex = 0;
 	let minSize = Infinity;
 	for (let i = 0; i < node.neighbors.length; i++) {
@@ -64,13 +67,14 @@ function insert<T>(node: Degree3Node<T>, value: T) {
 		}
 	}
 
-	if (node.neighbors[minSizeIndex] === null) {
+	const child = node.neighbors[minSizeIndex] ?? null;
+	if (child === null) {
 		node.neighbors[minSizeIndex] = {
 			value,
-			neighbors: [null, null, null],
+			neighbors: [node, null, null],
 		};
 	} else {
-		insert(node.neighbors[minSizeIndex]!, value);
+		insert(child, value);
 	}
 }
 
@@ -95,7 +99,7 @@ function* depthFirstSearch<T>(
 	}
 }
 
-function* breadthFirstSearch<T>(node: Degree3Node<T> | null, visited: ): Generator<T> {
+function* breadthFirstSearch<T>(node: Degree3Node<T> | null): Generator<T> {
 	if (node === null) {
 		return;
 	}
