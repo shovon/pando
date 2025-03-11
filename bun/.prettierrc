@@ -1,0 +1,15 @@
+{
+  "overrides": [
+    {
+      "files": [
+        "tsconfig.json",
+        "package.json",
+        ".vscode/*.json",
+        ".prettierrc"
+      ],
+      "options": { "tabWidth": 2, "useTabs": false }
+    }
+  ],
+  "tabWidth": 2,
+  "useTabs": true
+}

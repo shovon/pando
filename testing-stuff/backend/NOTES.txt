@@ -1,3 +1,0 @@
-When a participant connects (including authenticates) they are in the room
-When the participant disonnects (including due to technical issues) they are no longer in the room
-When the server crashes and restarts and loads up the old state once again, the participant can safely be assumed to be still in the call, but there should be some notification indicating the participant's state
